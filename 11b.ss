@@ -1,0 +1,166 @@
+; Carson Thrift
+; 10/5/19
+; Assignment 11b
+; CSSE304
+
+; Problem 4
+
+(load "chez-init.ss") ; put this file in the same folder, or add a pathname
+
+; This is a parser for simple Scheme expressions, 
+; such as those in EOPL, 3.1 thru 3.3.
+
+; You will want to replace this with your parser that includes more expression types, more options for these types, and error-checking.
+
+(define-datatype expression expression?
+    [var-exp
+    (id symbol?)]
+    [lambda-exp
+        (args (list-of symbol?))
+        (body (list-of expression?))
+    ]
+    [app-exp
+        (rator expression?)
+        (rand expression?)
+    ]
+    [if-exp-no-just
+        (pred expression?)
+        (then_case expression?)
+    ]
+    [if-exp
+        (pred expression?)
+        (then_case expression?)
+        (just_in_case expression?)
+    ]
+    [let-exp
+        (vars (list-of pair?))
+        (body (list-of expression?))
+    ]
+    [let*-exp
+        (vars (list-of pair?))
+        (body (list-of expression?))
+    ]
+    [named-let-exp
+        (name symbol?)
+        (vars (list-of pair?))
+        (body (list-of expression?))
+    ]
+    ; TODO: add case for letrec
+)
+
+; Procedures to make the parser a little bit saner.
+(define 1st car)
+(define 2nd cadr)
+(define 3rd caddr)
+(define 4th cadddr)
+
+(define parse-exp         
+  (lambda (datum)
+    (cond
+     [(symbol? datum) (var-exp datum)]
+     [(number? datum) (lit-exp datum)]
+     [(pair? datum)
+      (cond
+        [(eqv? (car datum) 'lambda)
+            (lambda-exp (2nd datum)
+                (parse-exp (3rd datum))
+            )
+        ]
+        [(eqv? (car datum) 'if)
+            (let ([len (length datum)])
+                (cond 
+                    [(= len 3) 
+                        (if-exp (2nd datum) 
+                            (parse-exp (3rd datum))
+                        )
+                    ]
+                    [(= len 4) 
+                        (if-exp (2nd datum) 
+                            (parse-exp (3rd datum))
+                            (parse-exp (4th datum))
+                        )
+                    ]
+                )
+            )  
+        ]
+        [(eqv? (car datum) 'let)
+
+            (let ([len (length datum)])
+                (cond 
+                    [(= len 3)             
+                        (let-exp (2nd datum) 
+                            (parse-exp (3rd datum))
+                        )
+                    ]
+                    [(= len 4) 
+                        (let-exp (2nd datum) 
+                            (3rd datum)
+                            (parse-exp (4th datum))
+                        )
+                    ]
+                )
+            )  
+        ]
+        [(eqv? (car datum) 'let*)
+            (let*-exp (2nd datum) 
+                (parse-exp (3rd datum))
+            )
+        ]
+        
+        ; TODO: Add case for letrec
+
+        [else (app-exp (parse-exp (1st datum))
+                (parse-exp (2nd datum)))])]
+     [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
+
+
+(define unparse-exp
+    (lambda (exp)
+        (cases expression exp
+            [var-exp (id) id]
+            [lambda-exp (args body)
+                (list 'lambda args (unparse-exp body))
+            ]
+            [if-exp-no-just (pred then_case)
+                (list 'if pred (unparse-exp then_case))
+            ]
+            [if-exp (pred then_case just_in_case)
+                (list 'if pred (unparse-exp then_case) (unparse-exp just_in_case))
+            ]
+            [let-exp (vars body)
+                (list 'let vars (unparse-exp body))
+            ]
+            [let-named-exp (name vars body)
+                (list 'let name vars (unparse-exp body))
+            ]
+            [let*-exp (vars body)
+                (list 'let* vars (unparse-exp body))
+            ]
+            ; TODO: Add case for letrec
+
+            [app-exp (rator rand)
+                (list (unparse-exp rator)
+                (unparse-exp rand))
+            ]
+        )
+    )
+)
+
+
+; An auxiliary procedure that could be helpful.
+(define var-exp?
+ (lambda (x)
+   (cases expression x
+     [var-exp (id) #t]
+     [else #f])))
+     
+(var-exp? (var-exp 'a))
+(var-exp? (app-exp (var-exp 'a) (var-exp 'b)))
+
+
+
+
+
+
+
+

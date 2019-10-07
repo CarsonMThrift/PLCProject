@@ -45,7 +45,10 @@
         (vars (list-of pair?))
         (body (list-of expression?))
     ]
-    ; TODO: add case for letrec
+    [letrec-exp
+        (vars (list-of pair?))
+        (body (list-of expression?))
+    ]
 )
 
 ; Procedures to make the parser a little bit saner.
@@ -84,15 +87,14 @@
             )  
         ]
         [(eqv? (car datum) 'let)
-
             (let ([len (length datum)])
                 (cond 
-                    [(= len 3)             
+                    [(= len 3) ; unnamed           
                         (let-exp (2nd datum) 
                             (parse-exp (3rd datum))
                         )
                     ]
-                    [(= len 4) 
+                    [(= len 4) ; named
                         (let-exp (2nd datum) 
                             (3rd datum)
                             (parse-exp (4th datum))
@@ -106,11 +108,15 @@
                 (parse-exp (3rd datum))
             )
         ]
-        
-        ; TODO: Add case for letrec
-
+        [(eqv? (car datum) 'letrec)
+            (letrec-exp (2nd datum)
+                (parse-exp (3rd datum))
+            )
+        ]
         [else (app-exp (parse-exp (1st datum))
-                (parse-exp (2nd datum)))])]
+                (parse-exp (2nd datum)))]
+      )
+     ]
      [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
 
 
@@ -136,8 +142,9 @@
             [let*-exp (vars body)
                 (list 'let* vars (unparse-exp body))
             ]
-            ; TODO: Add case for letrec
-
+            [letrec-exp (vars body)
+                (list 'letrec vars (unparse-exp body))
+            ]
             [app-exp (rator rand)
                 (list (unparse-exp rator)
                 (unparse-exp rand))

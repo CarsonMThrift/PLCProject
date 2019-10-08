@@ -1,5 +1,5 @@
-; Carson Thrift
-; 10/5/19
+; Carson Thrift and Olivia Penry
+; 10/8/19
 ; Assignment 11b
 ; CSSE304
 
@@ -47,10 +47,10 @@
         (vars (list-of pair?))
         (body (list-of expression?))
     ]
-    ; [let*-exp
-    ;     (vars (list-of pair?))
-    ;     (body (list-of expression?))
-    ; ]
+    [let*-exp
+        (vars (list-of pair?))
+        (body (list-of expression?))
+    ]
     [named-let-exp
         (name symbol?)
         (vars (list-of pair?))
@@ -112,12 +112,6 @@
                             (map parse-exp (cddr datum))
                         )
                     ]
-                    ; [(= len 4) ; named
-                    ;     (let-exp (2nd datum) 
-                    ;         (3rd datum)
-                    ;         (parse-exp (4th datum))
-                    ;     )
-                    ; ]
                     [else 
                         (named-let-exp (2nd datum)
                             (3rd datum)
@@ -127,19 +121,31 @@
                 )
             )  
         ]
-        ; [(eqv? (car datum) 'let*)
-        ;     (let*-exp (2nd datum) 
-        ;         (parse-exp (3rd datum))
-        ;     )
-        ; ]
+        [(eqv? (car datum) 'let*)
+            (let*-exp (2nd datum) 
+                (parse-exp (3rd datum))
+            )
+        ]
         ; [(eqv? (car datum) 'letrec)
         ;     (letrec-exp (2nd datum)
         ;         (parse-exp (3rd datum))
         ;     )
         ; ]
-        [else   (app-exp (parse-exp (1st datum)) (map parse-exp (cdr datum)))]
-        ; [else (app-exp (parse-exp (1st datum))
-        ;         (parse-exp (2nd datum)))]
+        [else   
+            (cond 
+                [(> (length datum) 2)
+                    (app-exp 
+                        (parse-exp (1st datum)) 
+                        (map parse-exp (cdr datum))
+                    )
+                ]
+                [else 
+                    (app-exp (parse-exp (1st datum))
+                        (parse-exp (2nd datum))
+                    )
+                ]
+            )
+        ]
       )
      ]
      [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
@@ -171,14 +177,14 @@
             [named-let-exp (name vars body)
                 (append (list 'let name vars) (map unparse-exp body))
             ]
-            ; [let*-exp (vars body)
-            ;     (list 'let* vars (unparse-exp body))
-            ; ]
+            [let*-exp (vars body)
+                (list 'let* vars (unparse-exp body))
+            ]
             ; [letrec-exp (vars body)
             ;     (list 'letrec vars (unparse-exp body))
             ; ]
             [app-exp (rator rands)
-                (list (unparse-exp rator)
+                (append (list (unparse-exp rator))
                 (map unparse-exp rands))
             ]
         )

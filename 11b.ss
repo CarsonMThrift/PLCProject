@@ -19,7 +19,11 @@
     [lit-exp
         (val number?)
     ]
-    [lambda-exp
+    [lambda-body-not-list-exp
+        (args (list-of symbol?))
+        (body (list-of expression?))
+    ]
+    [lambda-body-is-list-exp
         (args (list-of symbol?))
         (body expression?)
     ]
@@ -74,12 +78,10 @@
         [(eqv? (car datum) 'lambda)
             (cond 
                 [(list? (2nd datum))
-                    (lambda-exp (2nd datum)
-                        (if (list? (3rd datum))
-                            (parse-exp (3rd datum))
-                            (map parse-exp (cddr datum))
-                        )
-                    )
+                    (if (list? (3rd datum))
+                        (lambda-body-is-list-exp (2nd datum) (parse-exp (3rd datum)))
+                        (lambda-body-not-list-exp (2nd datum) (map parse-exp (cddr datum)))
+                    )  
                 ]
                 [else (lambda-no-args-exp (map parse-exp (cdr datum)))]
             )
@@ -148,8 +150,11 @@
         (cases expression exp
             [var-exp (id) id]
             [lit-exp (val) val]
-            [lambda-exp (args body)
+            [lambda-body-is-list-exp (args body)
                 (list 'lambda args (unparse-exp body))
+            ]
+            [lambda-body-not-list-exp (args body)
+                (append (list 'lambda args) (map unparse-exp body))
             ]
             [lambda-no-args-exp (body)
                 (append (list 'lambda) (map unparse-exp body))

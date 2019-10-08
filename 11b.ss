@@ -61,6 +61,10 @@
         (vars (list-of pair?))
         (body (list-of expression?))
     ]
+    [set!-exp
+        (var symbol?)
+        (body expression?)
+    ]
 )
 
 ; Procedures to make the parser a little bit saner.
@@ -74,7 +78,7 @@
             (symbol? d) 
             (vector? d)
             (boolean? d)
-            ((list-of datum?) d)
+            ((list-of datum?) d) ; Is this right for quoted lists?
         )
     )
 )
@@ -82,93 +86,95 @@
 (define parse-exp         
   (lambda (datum)
     (cond
-     [(pair? datum)
-      (cond
-        [(eqv? (car datum) 'lambda)
-            (cond 
-                [(list? (2nd datum))
-                    (if (<= (length datum) 2)
-                        (eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)
-                        (if (list? (3rd datum))
-                            (lambda-body-is-list-exp (2nd datum) (parse-exp (3rd datum)))
-                            (lambda-body-not-list-exp (2nd datum) (map parse-exp (cddr datum)))
-                        )  
-                    )
-                ]
-                [else (lambda-no-args-exp (map parse-exp (cdr datum)))]
-            )    
-        ]
-        [(eqv? (car datum) 'if)
-
-            (if-exp (2nd datum)
-                (parse-exp (3rd datum))
-                (parse-exp (4th datum))
-            )
-            ; (let ([len (length datum)])
-            ;     (cond 
-            ;         [(= len 3) 
-            ;             (if-exp (2nd datum) 
-            ;                 (parse-exp (3rd datum))
-            ;             )
-            ;         ]
-            ;         [(= len 4) 
-            ;             (if-exp (2nd datum) 
-            ;                 (parse-exp (3rd datum))
-            ;                 (parse-exp (4th datum))
-            ;             )
-            ;         ]
-            ;     )
-            ; )  
-        ]
-        [(eqv? (car datum) 'let)
-            (cond 
-                [(list? (2nd datum)) ; unnamed           
-                    (let-exp (2nd datum) 
-                        (map parse-exp (cddr datum))
-                    )
-                ]
-                [else 
-                    (named-let-exp (2nd datum)
-                        (3rd datum)
-                        (map parse-exp (cddr datum))
-                    )
-                ]
-            ) 
-        ]
-        [(eqv? (car datum) 'let*)
-            (if (list? (3rd datum))
-                (let*-body-is-list-exp (2nd datum) 
+        [(datum? datum) (lit-exp datum)]
+        [(pair? datum)
+            (cond
+                [(eqv? (car datum) 'lambda)
+                    (cond 
+                        [(list? (2nd datum))
+                            (if (null? (cddr datum))
+                                (eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)
+                                (if (list? (3rd datum))
+                                    (lambda-body-is-list-exp (2nd datum) (parse-exp (3rd datum)))
+                                    (lambda-body-not-list-exp (2nd datum) (map parse-exp (cddr datum)))
+                                )  
+                            )
+                        ]
+                        [else (lambda-no-args-exp (map parse-exp (cdr datum)))]
+                    )    
+            ]
+            [(eqv? (car datum) 'if)
+                (if-exp (2nd datum)
                     (parse-exp (3rd datum))
+                    (parse-exp (4th datum))
                 )
-                (let*-body-not-list-exp (2nd datum) 
+                ; (let ([len (length datum)])
+                ;     (cond 
+                ;         [(= len 3) 
+                ;             (if-exp (2nd datum) 
+                ;                 (parse-exp (3rd datum))
+                ;             )
+                ;         ]
+                ;         [(= len 4) 
+                ;             (if-exp (2nd datum) 
+                ;                 (parse-exp (3rd datum))
+                ;                 (parse-exp (4th datum))
+                ;             )
+                ;         ]
+                ;     )
+                ; )  
+            ]
+            [(eqv? (car datum) 'let)
+                (cond 
+                    [(list? (2nd datum)) ; unnamed           
+                        (let-exp (2nd datum) 
+                            (map parse-exp (cddr datum))
+                        )
+                    ]
+                    [else 
+                        (named-let-exp (2nd datum)
+                            (3rd datum)
+                            (map parse-exp (cddr datum))
+                        )
+                    ]
+                ) 
+            ]
+            [(eqv? (car datum) 'let*)
+                (if (list? (3rd datum))
+                    (let*-body-is-list-exp (2nd datum) 
+                        (parse-exp (3rd datum))
+                    )
+                    (let*-body-not-list-exp (2nd datum) 
+                        (map parse-exp (cddr datum))
+                    )
+                )
+            ]
+            [(eqv? (car datum) 'letrec)
+                (letrec-exp (2nd datum)
                     (map parse-exp (cddr datum))
                 )
-            )
+            ]
+            [(eqv? (car datum) 'set!)
+                (set!-exp (2nd datum) (parse-exp (3rd datum)))
+            ]
+            [else   
+                (cond 
+                    [(> (length datum) 2)
+                        (app-exp 
+                            (parse-exp (1st datum)) 
+                            (map parse-exp (cdr datum))
+                        )
+                    ]
+                    [else 
+                        (app-exp (parse-exp (1st datum))
+                            (parse-exp (2nd datum))
+                        )
+                    ]
+                )
+            ]
+        )
         ]
-        [(eqv? (car datum) 'letrec)
-            (letrec-exp (2nd datum)
-                (map parse-exp (cddr datum))
-            )
-        ]
-        [else   
-            (cond 
-                [(> (length datum) 2)
-                    (app-exp 
-                        (parse-exp (1st datum)) 
-                        (map parse-exp (cdr datum))
-                    )
-                ]
-                [else 
-                    (app-exp (parse-exp (1st datum))
-                        (parse-exp (2nd datum))
-                    )
-                ]
-            )
-        ]
-      )
-     ]
-     [(datum? datum) (lit-exp datum)]
-     [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
+        [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
 
 
 (define unparse-exp
@@ -204,6 +210,9 @@
             ]
             [letrec-exp (vars body)
                 (append (list 'letrec vars) (map unparse-exp body))
+            ]
+            [set!-exp (var body)
+                (list 'set! var (unparse-exp body))
             ]
             [app-exp (rator rands)
                 (append (list (unparse-exp rator))

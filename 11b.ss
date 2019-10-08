@@ -38,28 +38,32 @@
     ;     (pred expression?)
     ;     (then_case expression?)
     ; ]
-    ; [if-exp
-    ;     (pred expression?)
-    ;     (then_case expression?)
-    ;     (just_in_case expression?)
-    ; ]
+    [if-exp
+        (pred expression?)
+        (then_case expression?)
+        (just_in_case expression?)
+    ]
     [let-exp
         (vars (list-of pair?))
         (body (list-of expression?))
     ]
-    [let*-exp
+    [let*-body-not-list-exp
         (vars (list-of pair?))
         (body (list-of expression?))
+    ]
+    [let*-body-is-list-exp
+        (vars (list-of pair?))
+        (body expression?)
     ]
     [named-let-exp
         (name symbol?)
         (vars (list-of pair?))
         (body (list-of expression?))
     ]
-    ; [letrec-exp
-    ;     (vars (list-of pair?))
-    ;     (body (list-of expression?))
-    ; ]
+    [letrec-exp
+        (vars (list-of pair?))
+        (body (list-of expression?))
+    ]
 )
 
 ; Procedures to make the parser a little bit saner.
@@ -84,46 +88,55 @@
                     )  
                 ]
                 [else (lambda-no-args-exp (map parse-exp (cdr datum)))]
-            )
-            
+            )    
         ]
-        ; [(eqv? (car datum) 'if)
-        ;     (let ([len (length datum)])
-        ;         (cond 
-        ;             [(= len 3) 
-        ;                 (if-exp (2nd datum) 
-        ;                     (parse-exp (3rd datum))
-        ;                 )
-        ;             ]
-        ;             [(= len 4) 
-        ;                 (if-exp (2nd datum) 
-        ;                     (parse-exp (3rd datum))
-        ;                     (parse-exp (4th datum))
-        ;                 )
-        ;             ]
-        ;         )
-        ;     )  
-        ; ]
+        [(eqv? (car datum) 'if)
+
+            
+            ; (let ([len (length datum)])
+            ;     (cond 
+            ;         [(= len 3) 
+            ;             (if-exp (2nd datum) 
+            ;                 (parse-exp (3rd datum))
+            ;             )
+            ;         ]
+            ;         [(= len 4) 
+            ;             (if-exp (2nd datum) 
+            ;                 (parse-exp (3rd datum))
+            ;                 (parse-exp (4th datum))
+            ;             )
+            ;         ]
+            ;     )
+            ; )  
+        ]
         [(eqv? (car datum) 'let)
-            (let ([len (length datum)])
-                (cond 
-                    [(list? (2nd datum)) ; unnamed           
-                        (let-exp (2nd datum) 
-                            (map parse-exp (cddr datum))
-                        )
-                    ]
-                    [else 
-                        (named-let-exp (2nd datum)
-                            (3rd datum)
-                            (map parse-exp (cddr datum))
-                        )
-                    ]
-                )
-            )  
+            (cond 
+                [(list? (2nd datum)) ; unnamed           
+                    (let-exp (2nd datum) 
+                        (map parse-exp (cddr datum))
+                    )
+                ]
+                [else 
+                    (named-let-exp (2nd datum)
+                        (3rd datum)
+                        (map parse-exp (cddr datum))
+                    )
+                ]
+            ) 
         ]
         [(eqv? (car datum) 'let*)
-            (let*-exp (2nd datum) 
-                (parse-exp (3rd datum))
+            (if (list? (3rd datum))
+                (let*-body-is-list-exp (2nd datum) 
+                    (parse-exp (3rd datum))
+                )
+                (let*-body-not-list-exp (2nd datum) 
+                    (map parse-exp (cddr datum))
+                )
+            )
+        ]
+        [(eqv? (car datum) 'letrec)
+            (letrec-exp (2nd datum)
+                (map parse-exp (cddr datum))
             )
         ]
         ; [(eqv? (car datum) 'letrec)
@@ -168,21 +181,24 @@
             ; [if-exp-no-just (pred then_case)
             ;     (list 'if pred (unparse-exp then_case))
             ; ]
-            ; [if-exp (pred then_case just_in_case)
-            ;     (list 'if pred (unparse-exp then_case) (unparse-exp just_in_case))
-            ; ]
+            [if-exp (pred then_case just_in_case)
+                (list 'if pred (unparse-exp then_case) (unparse-exp just_in_case))
+            ]
             [let-exp (vars body)
                 (append (list 'let vars) (map unparse-exp body))
             ]
             [named-let-exp (name vars body)
                 (append (list 'let name vars) (map unparse-exp body))
             ]
-            [let*-exp (vars body)
+            [let*-body-is-list-exp (vars body) 
                 (list 'let* vars (unparse-exp body))
             ]
-            ; [letrec-exp (vars body)
-            ;     (list 'letrec vars (unparse-exp body))
-            ; ]
+            [let*-body-not-list-exp (vars body) 
+                (append (list 'let* vars) (map unparse-exp body))
+            ]
+            [letrec-exp (vars body)
+                (append (list 'letrec vars) (map unparse-exp body))
+            ]
             [app-exp (rator rands)
                 (append (list (unparse-exp rator))
                 (map unparse-exp rands))

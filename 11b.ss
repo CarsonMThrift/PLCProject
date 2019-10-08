@@ -31,10 +31,10 @@
         (rator expression?)
         (rands (list-of expression?))
     ]
-    ; [if-exp-no-just
-    ;     (pred expression?)
-    ;     (then_case expression?)
-    ; ]
+    [if-exp-no-just
+        (pred expression?)
+        (then_case expression?)
+    ]
     [if-exp
         (pred expression?)
         (then_case expression?)
@@ -82,16 +82,18 @@
 (define parse-exp         
   (lambda (datum)
     (cond
-     [(datum? datum) (lit-exp datum)]
      [(pair? datum)
       (cond
         [(eqv? (car datum) 'lambda)
             (cond 
                 [(list? (2nd datum))
-                    (if (list? (3rd datum))
-                        (lambda-body-is-list-exp (2nd datum) (parse-exp (3rd datum)))
-                        (lambda-body-not-list-exp (2nd datum) (map parse-exp (cddr datum)))
-                    )  
+                    (if (<= (length datum) 2)
+                        (eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)
+                        (if (list? (3rd datum))
+                            (lambda-body-is-list-exp (2nd datum) (parse-exp (3rd datum)))
+                            (lambda-body-not-list-exp (2nd datum) (map parse-exp (cddr datum)))
+                        )  
+                    )
                 ]
                 [else (lambda-no-args-exp (map parse-exp (cdr datum)))]
             )    
@@ -148,11 +150,6 @@
                 (map parse-exp (cddr datum))
             )
         ]
-        ; [(eqv? (car datum) 'letrec)
-        ;     (letrec-exp (2nd datum)
-        ;         (parse-exp (3rd datum))
-        ;     )
-        ; ]
         [else   
             (cond 
                 [(> (length datum) 2)
@@ -170,6 +167,7 @@
         ]
       )
      ]
+     [(datum? datum) (lit-exp datum)]
      [else (eopl:error 'parse-exp "bad expression: ~s" datum)])))
 
 
@@ -186,9 +184,9 @@
             [lambda-no-args-exp (body)
                 (append (list 'lambda) (map unparse-exp body))
             ]
-            ; [if-exp-no-just (pred then_case)
-            ;     (list 'if pred (unparse-exp then_case))
-            ; ]
+            [if-exp-no-just (pred then_case)
+                (list 'if pred (unparse-exp then_case))
+            ]
             [if-exp (pred then_case just_in_case)
                 (list 'if pred (unparse-exp then_case) (unparse-exp just_in_case))
             ]

@@ -13,14 +13,8 @@
 ; You will want to replace this with your parser that includes more expression types, more options for these types, and error-checking.
 
 (define-datatype expression expression?
-    [var-exp
-        (id symbol?)
-    ]
     [lit-exp
-        (val number?)
-    ]
-    [vec-exp
-        (vec vector?)
+        (val datum?)
     ]
     [lambda-body-not-list-exp
         (args (list-of symbol?))
@@ -74,13 +68,21 @@
 (define 2nd cadr)
 (define 3rd caddr)
 (define 4th cadddr)
+(define datum?
+    (lambda (d)
+        (or (number? d) 
+            (symbol? d) 
+            (vector? d)
+            (boolean? d)
+            ((list-of datum?) d)
+        )
+    )
+)
 
 (define parse-exp         
   (lambda (datum)
     (cond
-     [(symbol? datum) (var-exp datum)]
-     [(number? datum) (lit-exp datum)]
-     [(vector? datum) (vec-exp datum)]
+     [(datum? datum) (lit-exp datum)]
      [(pair? datum)
       (cond
         [(eqv? (car datum) 'lambda)
@@ -174,9 +176,7 @@
 (define unparse-exp
     (lambda (exp)
         (cases expression exp
-            [var-exp (id) id]
             [lit-exp (val) val]
-            [vec-exp (vec) vec]
             [lambda-body-is-list-exp (args body)
                 (list 'lambda args (unparse-exp body))
             ]

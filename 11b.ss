@@ -87,6 +87,7 @@
         )
     )
 )
+(define 2-list? (lambda (ls) (= 2 (length ls))))
 
 (define parse-exp         
   (lambda (datum)
@@ -143,8 +144,8 @@
                     [(null? (cddr datum))
                         (eopl:error 'parse-exp "Error in parse-expression: let expression: incorrect length: ~s" datum)
                     ]
-                    [(or (not (list? (2nd datum))) (not (andmap list? (2nd datum))))
-                        (eopl:error 'parse-exp "Error in parse-exp decls: not a proper list: ~s" datum)
+                    [(or (not ((list-of pair?) (2nd datum))) (not (andmap list? (2nd datum))) (not (andmap 2-list? (2nd datum))))
+                        (eopl:error 'parse-exp "Error in parse-exp decls: not a proper list of pairs of length 2: ~s" datum)
 
                     ]
                     [(list? (2nd datum)) ; unnamed           
@@ -161,21 +162,37 @@
                 ) 
             ]
             [(eqv? (car datum) 'let*)
-                (if (list? (3rd datum))
-                    (let*-body-is-list-exp (2nd datum) 
-                        (parse-exp (3rd datum))
-                    )
-                    (let*-body-not-list-exp (2nd datum) 
-                        (map parse-exp (cddr datum))
-                    )
+                
+                (cond 
+                    [(or (not ((list-of pair?) (2nd datum))) (not (andmap list? (2nd datum))) (not (andmap 2-list? (2nd datum))))
+                        (eopl:error 'parse-exp "Error in parse-exp decls: not a proper list of pairs of length 2: ~s" datum)
+                    ]
+                    [(list? (3rd datum))
+                        (let*-body-is-list-exp (2nd datum) 
+                            (parse-exp (3rd datum))
+                        )
+                    ]
+                    [else (let*-body-not-list-exp (2nd datum) 
+                            (map parse-exp (cddr datum))
+                        )
+                    ]
+
                 )
             ]
             [(eqv? (car datum) 'letrec)
-                (if (null? (cddr datum))
+                (cond 
+                    [(or (not ((list-of pair?) (2nd datum))) (not (andmap list? (2nd datum))) (not (andmap 2-list? (2nd datum))))
+                        (eopl:error 'parse-exp "Error in parse-exp decls: not a proper list of pairs of length 2: ~s" datum)
+                    ]
+                    [(null? (cddr datum)) 
                         (eopl:error 'parse-exp "Error in parse-expression: letrec expression: incorrect length: ~s" datum)
+                    ]
+                    [else 
                         (letrec-exp (map parse-exp (2nd datum))
                             (map parse-exp (cddr datum))
                         )
+                    ]
+
                 )
             ]
             [(eqv? (car datum) 'set!)

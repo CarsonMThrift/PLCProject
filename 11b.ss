@@ -19,6 +19,9 @@
     [lit-exp
         (val number?)
     ]
+    [vec-exp
+        (vec vector?)
+    ]
     [lambda-body-not-list-exp
         (args (list-of symbol?))
         (body (list-of expression?))
@@ -77,6 +80,7 @@
     (cond
      [(symbol? datum) (var-exp datum)]
      [(number? datum) (lit-exp datum)]
+     [(vector? datum) (vec-exp datum)]
      [(pair? datum)
       (cond
         [(eqv? (car datum) 'lambda)
@@ -92,7 +96,10 @@
         ]
         [(eqv? (car datum) 'if)
 
-            
+            (if-exp (2nd datum)
+                (parse-exp (3rd datum))
+                (parse-exp (4th datum))
+            )
             ; (let ([len (length datum)])
             ;     (cond 
             ;         [(= len 3) 
@@ -169,6 +176,7 @@
         (cases expression exp
             [var-exp (id) id]
             [lit-exp (val) val]
+            [vec-exp (vec) vec]
             [lambda-body-is-list-exp (args body)
                 (list 'lambda args (unparse-exp body))
             ]

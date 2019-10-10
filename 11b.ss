@@ -122,22 +122,7 @@
                         (parse-exp (3rd datum))
                         (parse-exp (4th datum))
                     )
-                )
-                ; (let ([len (length datum)])
-                ;     (cond 
-                ;         [(= len 3) 
-                ;             (if-exp (2nd datum) 
-                ;                 (parse-exp (3rd datum))
-                ;             )
-                ;         ]
-                ;         [(= len 4) 
-                ;             (if-exp (2nd datum) 
-                ;                 (parse-exp (3rd datum))
-                ;                 (parse-exp (4th datum))
-                ;             )
-                ;         ]
-                ;     )
-                ; )  
+                )  
             ]
             [(eqv? (car datum) 'let)
                 (cond 

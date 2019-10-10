@@ -2,18 +2,62 @@
 ;; Parsed expression datatypes
 
 (define-datatype expression expression?
-  [var-exp        ; variable references
-   (id symbol?)]
-  [lit-exp        ; "Normal" data.  Did I leave out any types?
-   (datum
-    (lambda (x)
-      (ormap 
-       (lambda (pred) (pred x))
-       (list number? vector? boolean? symbol? string? pair? null?))))]
-  [app-exp        ; applications
-   (rator expression?)
-   (rands (list-of expression?))]  
-  )
+    [var-exp 
+        (var symbol?)
+    ]
+    [lit-exp
+        (val datum?)
+    ]
+    [lambda-body-not-list-exp
+        (args (list-of symbol?))
+        (body (list-of expression?))
+    ]
+    [lambda-body-is-list-exp
+        (args (list-of symbol?))
+        (body expression?)
+    ]
+    [lambda-no-args-exp
+        (body (list-of expression?))
+    ]
+    [app-exp
+        (rator expression?)
+        (rands (list-of expression?))
+    ]
+    [if-exp-no-just
+        (pred expression?)
+        (then_case expression?)
+    ]
+    [if-exp
+        (pred expression?)
+        (then_case expression?)
+        (just_in_case expression?)
+    ]
+    [let-exp
+        (vars (list-of pair?))
+        (body (list-of expression?))
+    ]
+    [let*-body-not-list-exp
+        (vars (list-of pair?))
+        (body (list-of expression?))
+    ]
+    [let*-body-is-list-exp
+        (vars (list-of pair?))
+        (body expression?)
+    ]
+    [named-let-exp
+        (name symbol?)
+        (vars (list-of pair?))
+        (body (list-of expression?))
+    ]
+    [letrec-exp
+        (vars (list-of pair?))
+        (body (list-of expression?))
+    ]
+    [set!-exp
+        (var symbol?)
+        (body expression?)
+    ]
+)
 
 	
 ; datatype for procedures.  At first there is only one

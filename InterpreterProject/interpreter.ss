@@ -20,7 +20,10 @@
       [app-exp (rator rands)
         (let ([proc-value (eval-exp rator)]
               [args (eval-rands rands)])
-          (apply-proc proc-value args))]
+          (apply-proc proc-value args 'null))]
+      [lambda-body-not-list-exp (args body) 
+        (apply-proc lambda-body-not-list-proc args body)
+      ]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
@@ -34,15 +37,19 @@
 ;  User-defined procedures will be added later.
 
 (define apply-proc
-  (lambda (proc-value args)
+  (lambda (proc-value args body)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
 			; You will add other cases
+      [lambda-body-not-list-proc (op) (lambda (args) body)]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
 
-(define *prim-proc-names* '(+ - * add1 sub1 cons =))
+(define *prim-proc-names* '(+ - * / add1 sub1 zero? not cons car cdr caar cadr cdar cddr 
+                              caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? equal? atom? length 
+                               list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
+                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >=))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -80,7 +87,7 @@
       [(cdadr) (cdadr (1st args))]
       [(caddr) (caddr (1st args))]
       [(cdddr) (cdddr (1st args))]
-      [(list) (list args)] 
+      [(list) args] 
       [(null?) (null? args)] 
       [(assq) (assq (1st args) (2nd args))] 
       [(eq?) (eq? (1st args) (2nd args))] 

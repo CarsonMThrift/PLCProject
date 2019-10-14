@@ -64,11 +64,24 @@
 ; kind of procedure, but more kinds will be added later.
 
 (define-datatype proc-val proc-val?
-  [prim-proc
-   (name symbol?)])
-	 
-	 
-	 
+    [prim-proc
+        (name symbol?)]
+     [lambda-body-not-list-proc
+        (args (list-of symbol?))
+        (body (list-of expression?))
+        (local-env environment?)
+    ]
+    [lambda-body-is-list-proc
+        (args (list-of symbol?))
+        (body expression?)
+        (local-env environment?)
+    ]
+    [lambda-no-args-proc
+        (body (list-of expression?))
+        (local-env environment?)
+
+    ]
+)
 	
 ;; environment type definitions
 

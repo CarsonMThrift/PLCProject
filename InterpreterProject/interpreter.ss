@@ -3,12 +3,12 @@
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
-    (eval-exp form)))
+    (eval-exp form init-env)))
 
 ; eval-exp is the main component of the interpreter
 
 (define eval-exp
-  (lambda (exp)
+  (lambda (exp local-env)
     (cases expression exp
       [lit-exp (datum) datum]
       [var-exp (id)
@@ -18,30 +18,31 @@
 		          "variable not found in environment: ~s"
 			   id)))] 
       [app-exp (rator rands)
-        (let ([proc-value (eval-exp rator)]
-              [args (eval-rands rands)])
-          (apply-proc proc-value args 'null))]
+        (let ([proc-value (eval-exp rator local-env)]
+              [args (if (equal? rator (var-exp 'quote)) ; special case for quote
+                        (map unparse-exp rands)
+                        (eval-rands rands local-env))])
+          (apply-proc proc-value args local-env))]
       [lambda-body-not-list-exp (args body) 
-        (apply-proc lambda-body-not-list-proc args body)
+        (lambda-body-not-list-proc args body local-env)
       ]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
 
 (define eval-rands
-  (lambda (rands)
-    (map eval-exp rands)))
+  (lambda (rands local-env)
+    (map (lambda (x) (eval-exp x local-env)) rands)))
 
 ;  Apply a procedure to its arguments.
 ;  At this point, we only have primitive procedures.  
 ;  User-defined procedures will be added later.
 
 (define apply-proc
-  (lambda (proc-value args body)
+  (lambda (proc-value args local-env)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
 			; You will add other cases
-      [lambda-body-not-list-proc (op) (lambda (args) body)]
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
@@ -49,7 +50,7 @@
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not cons car cdr caar cadr cdar cddr 
                               caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? equal? atom? length 
                                list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
-                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >=))
+                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -122,6 +123,7 @@
       [(>) (> (1st args) (2nd args))]
       [(<=) (<= (1st args) (2nd args))]
       [(>=) (>= (1st args) (2nd args))]
+      [(quote) (1st args)]
 
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 

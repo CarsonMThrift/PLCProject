@@ -166,7 +166,51 @@
 )
 
 
-
+(define unparse-exp
+    (lambda (exp)
+        (cases expression exp
+            [var-exp (id) id]
+            [lit-exp (val) val]
+            [lambda-body-is-list-exp (args body)
+                (list 'lambda args (unparse-exp body))
+            ]
+            [lambda-body-not-list-exp (args body)
+                (append (list 'lambda args) (map unparse-exp body))
+            ]
+            [lambda-no-args-exp (body)
+                (append (list 'lambda) (map unparse-exp body))
+            ]
+            [if-exp-no-just (pred then_case)
+                (list 'if pred (unparse-exp then_case))
+            ]
+            [if-exp (pred then_case just_in_case)
+                (list 'if (unparse-exp pred) (unparse-exp then_case) (unparse-exp just_in_case))
+            ]
+            [let-exp (vars body)
+                (append (list 'let vars) (map unparse-exp body))
+            ]
+            [named-let-exp (name vars body)
+                (append (list 'let name vars) (map unparse-exp body))
+            ]
+            [let*-body-is-list-exp (vars body) 
+                (list 'let* vars (unparse-exp body))
+            ]
+            [let*-body-not-list-exp (vars body) 
+                (append (list 'let* vars) (map unparse-exp body))
+            ]
+            [letrec-exp (vars body)
+                (append (list 'letrec (map unparse-exp vars)) (map unparse-exp body))
+            ]
+            [set!-exp (var body)
+                (list 'set! var (unparse-exp body))
+            ]
+            [app-exp (rator rands)
+                (append (list (unparse-exp rator))
+                (map unparse-exp rands))
+            ]
+        )
+    )
+)
 
 
 

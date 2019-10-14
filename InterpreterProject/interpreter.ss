@@ -26,6 +26,12 @@
       [lambda-body-not-list-exp (args body) 
         (lambda-body-not-list-proc args body local-env)
       ]
+      [lambda-body-is-list-exp (args body)
+        (lambda-body-is-list-proc args body local-env)
+      ]
+      [lambda-no-args-exp (body)
+        (lambda-no-args-proc body local-env)
+      ]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list

@@ -16,6 +16,8 @@
         (args (list-of symbol?))
         (body expression?)
     ]
+    [lambda-multiple-bodies-exp
+    ]
     [lambda-no-args-exp
         (body (list-of expression?))
     ]
@@ -66,20 +68,24 @@
 (define-datatype proc-val proc-val?
     [prim-proc
         (name symbol?)]
-     [lambda-body-not-list-proc
-        (args (list-of symbol?))
-        (body (list-of expression?))
-        (local-env environment?)
-    ]
-    [lambda-body-is-list-proc
-        (args (list-of symbol?))
-        (body expression?)
-        (local-env environment?)
-    ]
-    [lambda-no-args-proc
-        (body (list-of expression?))
-        (local-env environment?)
-    ]
+    [closure
+        (arg-names (list-of symbol?))
+        (bodies (list-of expression?))
+        (local-env environment?)]
+    ;  [lambda-body-not-list-proc
+    ;     (args (list-of symbol?))
+    ;     (body (list-of expression?))
+    ;     (local-env environment?)
+    ; ]
+    ; [lambda-body-is-list-proc
+    ;     (args (list-of symbol?))
+    ;     (body expression?)
+    ;     (local-env environment?)
+    ; ]
+    ; [lambda-no-args-proc
+    ;     (body (list-of expression?))
+    ;     (local-env environment?)
+    ; ]
 )
 	
 ;; environment type definitions

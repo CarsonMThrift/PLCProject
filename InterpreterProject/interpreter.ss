@@ -1,9 +1,11 @@
 ; top-level-eval evaluates a form in the global environment
 
+(define global-env init-env)
+
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
-    (eval-exp form init-env)))
+    (eval-exp form (empty-env))))
 
 ; eval-exp is the main component of the interpreter
 
@@ -12,26 +14,50 @@
     (cases expression exp
       [lit-exp (datum) datum]
       [var-exp (id)
-				(apply-env init-env id; look up its value.
-      	   (lambda (x) x) ; procedure to call if id is in the environment 
-           (lambda () (eopl:error 'apply-env ; procedure to call if id not in env
-		          "variable not found in environment: ~s"
-			   id)))] 
+				(apply-env local-env id; look up its value.
+      	  (lambda (x) x) ; procedure to call if id is in the environment 
+          (lambda () 
+            (apply-env global-env id
+              (lambda (x) x)
+              (lambda () 
+                (eopl:error 'apply-env
+                "variable ~s is not bound"
+                id)))))] 
+          ;(eopl:error 'apply-env ; procedure to call if id not in env
+		      ;  "variable not found in environment: ~s"
+			    ;  id)
+          
       [app-exp (rator rands)
         (let ([proc-value (eval-exp rator local-env)]
               [args (if (equal? rator (var-exp 'quote)) ; special case for quote
                         (map unparse-exp rands)
                         (eval-rands rands local-env))])
-          (apply-proc proc-value args local-env))]
+          (apply-proc proc-value args))]
       [lambda-body-not-list-exp (args body) 
-        (lambda-body-not-list-proc args body local-env)
+        ;(lambda-body-not-list-proc args body local-env)
+        (closure args body local-env)
       ]
       [lambda-body-is-list-exp (args body)
-        (lambda-body-is-list-proc args body local-env)
+      ;   (lambda-body-is-list-proc args body local-env)
+        (closure args (list body) local-env)
       ]
       [lambda-no-args-exp (body)
-        (lambda-no-args-proc body local-env)
+      ;   (lambda-no-args-proc body local-env)
+        (closure '() body local-env)
       ]
+      [let-exp (vars body)
+        (eval-bodies body
+          (extend-env (map unparse-exp (map cadr vars))
+                      (eval-rands (map caaddr vars) local-env)
+                      local-env
+          )
+        )
+      ]
+      [if-exp (pred then_case just_in_case)
+        (if (eval-exp pred local-env)
+          (eval-exp then_case local-env)
+          (eval-exp just_in_case local-env)
+        )]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
@@ -40,14 +66,27 @@
   (lambda (rands local-env)
     (map (lambda (x) (eval-exp x local-env)) rands)))
 
+(define eval-bodies
+  (lambda (bodies local-env)
+    (if (null? (cdr bodies))
+      (eval-exp (car bodies) local-env)
+      (begin
+        (eval-exp (car bodies) local-env)
+        (eval-bodies (cdr bodies) local-env)
+      )
+    )
+  )
+)
+
 ;  Apply a procedure to its arguments.
 ;  At this point, we only have primitive procedures.  
 ;  User-defined procedures will be added later.
 
 (define apply-proc
-  (lambda (proc-value args local-env)
+  (lambda (proc-value args)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
+      [closure (arg-names bodies local-env) (eval-bodies bodies (extend-env arg-names args local-env))]
 			; You will add other cases
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
@@ -71,10 +110,10 @@
 (define apply-prim-proc
   (lambda (prim-proc args)
     (case prim-proc
-      [(+) (+ (1st args) (2nd args))]
-      [(-) (- (1st args) (2nd args))]
-      [(*) (* (1st args) (2nd args))]
-      [(/) (/ (1st args) (2nd args))]
+      [(+) (apply + args)]
+      [(-) (apply - args)]
+      [(*) (apply * args)]
+      [(/) (apply / args)]
       [(add1) (+ (1st args) 1)]
       [(sub1) (- (1st args) 1)]
       [(zero?) (zero? (1st args))]
@@ -95,17 +134,17 @@
       [(caddr) (caddr (1st args))]
       [(cdddr) (cdddr (1st args))]
       [(list) args] 
-      [(null?) (null? args)] 
+      [(null?) (null? (1st args))] 
       [(assq) (assq (1st args) (2nd args))] 
       [(eq?) (eq? (1st args) (2nd args))] 
       [(equal?) (equal? (1st args) (2nd args))] 
       [(atom?) (atom? (1st args))] 
-      [(length) (length args)] 
-      [(list->vector) (list->vector args)] 
-      [(list?) (list? args)] 
-      [(pair?) (pair? args)]
-      [(procedure?) (procedure? args)]
-      [(vector->list) (vector->list args)]
+      [(length) (length (1st args))] 
+      [(list->vector) (list->vector (1st args))] 
+      [(list?) (list? (1st args))] 
+      [(pair?) (pair? (1st args))]
+      [(procedure?) (proc-val? (1st args))]
+      [(vector->list) (vector->list (1st args))]
       [(vector) (vector args)]
       [(make-vector) (make-vector (1st args) (2nd args))
         (cond 
@@ -116,9 +155,9 @@
         )
       ]
       [(vector-ref) (vector-ref (1st args) (2nd args))]
-      [(vector?) (vector? args)]
-      [(number?) (number? args)]
-      [(symbol?) (symbol? args)]
+      [(vector?) (vector? (1st args))]
+      [(number?) (number? (1st args))]
+      [(symbol?) (symbol? (1st args))]
       [(set-car!) (set-car! (1st args) (2nd args))]
       [(set-cdr!) (set-cdr! (1st args) (2nd args))]
       [(vector-set!) (vector-set! (1st args) (2nd args) (3rd args))]
@@ -146,13 +185,3 @@
 
 (define eval-one-exp
   (lambda (x) (top-level-eval (parse-exp x))))
-
-
-
-
-
-
-
-
-
-

@@ -32,6 +32,7 @@
             (vector? d)
             (boolean? d)
             (char? d)
+            (string? d)
             ((list-of datum?) d) ; Is this right for quoted lists?
         )
     )
@@ -42,6 +43,7 @@
   (lambda (datum)
     (cond
         [(symbol? datum) (var-exp datum)]
+        [(null? datum) (lit-exp datum)]
         [(and (list? datum) (not (null? (cdr datum))))
             (cond
                 [(eqv? (car datum) 'lambda)
@@ -49,12 +51,19 @@
                         [(null? (cddr datum))
                             (eopl:error 'parse-exp "lambda-expression: missing body ~s" datum)
                         ]
-                        [(list? (2nd datum))
+                        [(list? (2nd datum)) ;checking for args
                             (if ((list-of symbol?) (2nd datum))
-                                (if (null? (cddr datum))
+                                (if (null? (cddr datum)) ;no body
                                     (eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)
                                     (if (list? (3rd datum))
-                                        (lambda-body-is-list-exp (2nd datum) (parse-exp (3rd datum)))
+                                        (lambda-body-is-list-exp 
+                                            (2nd datum)  
+                                            (if (null? (cdddr datum))
+                                                (parse-exp (3rd datum))
+                                                (letrec ([helper (lambda (x) (if (null? (cdr x)) (parse-exp (car x)) (helper (cdr x))))])
+                                                    (helper (cddr datum)))
+                                            )
+                                        )
                                         (lambda-body-not-list-exp (2nd datum) (map parse-exp (cddr datum)))
                                     )  
                                 )

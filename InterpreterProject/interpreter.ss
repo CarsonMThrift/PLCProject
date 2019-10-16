@@ -2,7 +2,7 @@
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not cons car cdr caar cadr cdar cddr 
                               caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? equal? atom? length 
                                list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
-                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote))
+                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -70,7 +70,15 @@
         (if (eval-exp pred local-env)
           (eval-exp then_case local-env)
           (eval-exp just_in_case local-env)
-        )]
+        )
+      ]
+      [if-exp-no-just (pred then_case)
+        (if (eval-exp pred local-env)
+          (eval-exp then_case local-env)
+          (#<void>)
+        )
+      ]
+
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
@@ -173,6 +181,7 @@
       [(<=) (<= (1st args) (2nd args))]
       [(>=) (>= (1st args) (2nd args))]
       [(quote) (1st args)]
+      [(apply) (apply (1st args) (2nd args))]
 
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 

@@ -2,7 +2,7 @@
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not cons car cdr caar cadr cdar cddr 
                               caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? equal? atom? length 
                                list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
-                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply))
+                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -75,7 +75,7 @@
       [if-exp-no-just (pred then_case)
         (if (eval-exp pred local-env)
           (eval-exp then_case local-env)
-          (#<void>)
+          (void)
         )
       ]
 
@@ -157,7 +157,7 @@
       [(pair?) (pair? (1st args))]
       [(procedure?) (proc-val? (1st args))]
       [(vector->list) (vector->list (1st args))]
-      [(vector) (vector args)]
+      [(vector) (apply vector args)]
       [(make-vector) (make-vector (1st args) (2nd args))
         (cond 
           [(null? (2nd args))
@@ -181,7 +181,26 @@
       [(<=) (<= (1st args) (2nd args))]
       [(>=) (>= (1st args) (2nd args))]
       [(quote) (1st args)]
-      [(apply) (apply (1st args) (2nd args))]
+      [(apply) (apply-proc (1st args) (2nd args))]
+      [(map) 
+          ; (2nd args)
+        (map (lambda (x) 
+          (apply-proc (1st args) x)
+        ) (cadr args))
+
+
+        ; (letrec ([helper 
+        ;   (lambda (x acc) 
+        ;     (if (null? x)
+        ;       acc
+        ;       (if (pair? x)
+        ;         (helper (cdr x) (cons acc (apply-proc (1st args) (car x))))
+        ;         (helper (cdr x) (cons acc #f))
+        ;       )
+        ;     ))])
+        ;   (helper (cdr args) '())
+        ; )
+      ]
 
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 

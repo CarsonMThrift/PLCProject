@@ -16,8 +16,6 @@
         (args (list-of symbol?))
         (body expression?)
     ]
-    [lambda-multiple-bodies-exp
-    ]
     [lambda-no-args-exp
         (body (list-of expression?))
     ]
@@ -62,6 +60,13 @@
 )
 
 	
+(define-datatype environment environment?
+  (empty-env-record)
+  (extended-env-record
+   (syms (list-of symbol?))
+   (vals (list-of scheme-value?))
+   (env environment?)))
+   
 ; datatype for procedures.  At first there is only one
 ; kind of procedure, but more kinds will be added later.
 
@@ -72,30 +77,9 @@
         (arg-names (list-of symbol?))
         (bodies (list-of expression?))
         (local-env environment?)]
-    ;  [lambda-body-not-list-proc
-    ;     (args (list-of symbol?))
-    ;     (body (list-of expression?))
-    ;     (local-env environment?)
-    ; ]
-    ; [lambda-body-is-list-proc
-    ;     (args (list-of symbol?))
-    ;     (body expression?)
-    ;     (local-env environment?)
-    ; ]
-    ; [lambda-no-args-proc
-    ;     (body (list-of expression?))
-    ;     (local-env environment?)
-    ; ]
 )
 	
 ;; environment type definitions
 
 (define scheme-value?
   (lambda (x) #t))
-
-(define-datatype environment environment?
-  (empty-env-record)
-  (extended-env-record
-   (syms (list-of symbol?))
-   (vals (list-of scheme-value?))
-   (env environment?)))

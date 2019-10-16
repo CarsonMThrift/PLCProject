@@ -155,7 +155,7 @@
       [(list->vector) (list->vector (1st args))] 
       [(list?) (list? (1st args))] 
       [(pair?) (pair? (1st args))]
-      [(procedure?) (proc-val? (1st args))]
+      [(procedure?) (proc-val? (if (list? args) (1st args) args))]
       [(vector->list) (vector->list (1st args))]
       [(vector) (apply vector args)]
       [(make-vector) (make-vector (1st args) (2nd args))
@@ -183,23 +183,9 @@
       [(quote) (1st args)]
       [(apply) (apply-proc (1st args) (2nd args))]
       [(map) 
-          ; (2nd args)
-        (map (lambda (x) 
-          (apply-proc (1st args) x)
-        ) (cadr args))
-
-
-        ; (letrec ([helper 
-        ;   (lambda (x acc) 
-        ;     (if (null? x)
-        ;       acc
-        ;       (if (pair? x)
-        ;         (helper (cdr x) (cons acc (apply-proc (1st args) (car x))))
-        ;         (helper (cdr x) (cons acc #f))
-        ;       )
-        ;     ))])
-        ;   (helper (cdr args) '())
-        ; )
+        (let ([p (1st args)])
+          (map (lambda (x) (apply-proc p (list x))) (2nd args))
+        )
       ]
 
       [else (error 'apply-prim-proc 

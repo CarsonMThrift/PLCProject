@@ -70,7 +70,7 @@
                                 (eopl:error 'parse-exp "lambda argument list: formals must be symbols: ~s" datum)
                             )
                         ]
-                        [else (lambda-no-args-exp (map parse-exp (cdr datum)))]
+                        [else (lambda-variable-args-exp (map parse-exp (cdr datum)))]
                     )    
             ]
             [(eqv? (car datum) 'if)
@@ -186,7 +186,7 @@
             [lambda-body-not-list-exp (args body)
                 (append (list 'lambda args) (map unparse-exp body))
             ]
-            [lambda-no-args-exp (body)
+            [lambda-variable-args-exp (body)
                 (append (list 'lambda) (map unparse-exp body))
             ]
             [if-exp-no-just (pred then_case)

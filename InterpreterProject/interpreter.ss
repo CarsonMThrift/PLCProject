@@ -54,7 +54,7 @@
       ;   (lambda-body-is-list-proc args body local-env)
         (closure args (list body) local-env)
       ]
-      [lambda-no-args-exp (body)
+      [lambda-variable-args-exp (body)
       ;   (lambda-no-args-proc body local-env)
         (closure '() body local-env)
       ]

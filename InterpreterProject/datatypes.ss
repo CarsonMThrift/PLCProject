@@ -16,7 +16,7 @@
         (args (list-of symbol?))
         (body expression?)
     ]
-    [lambda-no-args-exp
+    [lambda-variable-args-exp
         (body (list-of expression?))
     ]
     [app-exp

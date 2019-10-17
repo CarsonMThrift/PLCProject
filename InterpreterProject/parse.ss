@@ -37,6 +37,26 @@
         )
     )
 )
+
+(define variable-args?
+    (lambda (d) 
+        (or 
+            (symbol? d)
+            (and (pair? d) (not (list? d)))
+        )
+    )
+)
+
+(define closure-args?
+    (lambda (d) 
+        (or 
+            (symbol? d)
+            (and (pair? d) (not (list? d)))
+            (list? d)
+        )
+    )
+)
+
 (define var-assign-list? (lambda (ls) (and (list? ls) (= 2 (length ls)) (symbol? (car ls)))))
 
 (define parse-exp         
@@ -70,7 +90,11 @@
                                 (eopl:error 'parse-exp "lambda argument list: formals must be symbols: ~s" datum)
                             )
                         ]
-                        [else (lambda-variable-args-exp (map parse-exp (cdr datum)))]
+                        [(or (symbol? (2nd datum)) (and (not (list? (2nd datum))) (pair? (2nd datum)))) ; variable args
+                            (lambda-variable-args-exp (2nd datum) (parse-exp (cddr datum)))
+                        ]
+                        [else (eopl:error 'parse-exp "lambda-expression: bad lambda expression: ~s" datum)
+]
                     )    
             ]
             [(eqv? (car datum) 'if)
@@ -186,8 +210,8 @@
             [lambda-body-not-list-exp (args body)
                 (append (list 'lambda args) (map unparse-exp body))
             ]
-            [lambda-variable-args-exp (body)
-                (append (list 'lambda) (map unparse-exp body))
+            [lambda-variable-args-exp (args body)
+                (append (list 'lambda) (list args) (map unparse-exp body))
             ]
             [if-exp-no-just (pred then_case)
                 (list 'if pred (unparse-exp then_case))

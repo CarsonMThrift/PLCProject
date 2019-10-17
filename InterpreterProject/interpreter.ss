@@ -54,9 +54,12 @@
       ;   (lambda-body-is-list-proc args body local-env)
         (closure args (list body) local-env)
       ]
-      [lambda-variable-args-exp (body)
+      ; [lambda-no-args-exp (body)
+      ;   (closure '() body local-env)
+      ; ]
+      [lambda-variable-args-exp (args body)
       ;   (lambda-no-args-proc body local-env)
-        (closure '() body local-env)
+        (closure (list args) (list body) local-env)
       ]
       [let-exp (vars body)
         (eval-bodies body

@@ -238,4 +238,10 @@
       (rep))))  ; tail-recursive, so stack doesn't grow.
 
 (define eval-one-exp
-  (lambda (x) (top-level-eval (parse-exp x))))
+  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
+
+  (define syntax-expand 
+    (lambda (exp)
+        exp
+    )
+  )

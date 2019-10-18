@@ -239,29 +239,24 @@
 (define syntax-expand 
   (lambda (exp)
     exp
-    ; (cases e (cadr (cadr (caaddr (caaddr (exp)))))
-      ; and
-      ; [and 
-      ;   (lambda-body-is-list-exp 
-      ;     (caddr (caaddr (caaddr (exp)))) ; args, sinced it's parsed we gotta go DEEP. obvi this isnt' right
-      ;     (and (caddr (caaddr (caaddr (exp))))) ; body
-      ;   )
+    ; (cases expression exp)
+      ; [app-exp (rator rands)
+      ;     (let ([proc-value (unparse-exp rator)]
+      ;           [args (if (equal? rator (var-exp 'quote)) ; special case for quote
+      ;                     (map unparse-exp rands)
+      ;                     (eval-rands rands local-env))])
+
+      ;       (cases symbol proc-value
+      ;         ['cond (parse-exp (map (lambda (arg-ls) ) args)]
+      ;         ['begin ()]
+      ;       )
+      ;     )
       ; ]
 
-      ; or
-      ; [or 
-      ;   (lambda-body-is-list-exp 
-      ;     (caddr (caaddr (caaddr (exp)))) ; args, sinced it's parsed we gotta go DEEP. obvi this isnt' right
-      ;     (or (caddr (caaddr (caaddr (exp))))) ; body
-      ;   )
-      ; ]
 
       ; [else exp]
-      ; begin
-
-      ; cond
-      
-      ; let*
+    
+    ; 
 
     ; )
   )

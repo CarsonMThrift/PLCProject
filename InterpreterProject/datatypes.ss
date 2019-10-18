@@ -16,12 +16,9 @@
         (args (list-of symbol?))
         (body expression?)
     ]
-    ; [lambda-no-args-exp
-    ;     (body (list-of expression?))
-    ; ]
     [lambda-variable-args-exp
         (args variable-args?)
-        (body (or expression? (list-of expression?)))   
+        (body (list-of expression?))   
     ]
     [app-exp
         (rator expression?)
@@ -78,7 +75,7 @@
     [prim-proc
         (name symbol?)]
     [closure
-        (arg-names (list-of closure-args?))
+        (arg-names closure-args?)
         (bodies (list-of expression?))
         (local-env environment?)]
 )

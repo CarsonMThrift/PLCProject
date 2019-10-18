@@ -59,7 +59,7 @@
       ; ]
       [lambda-variable-args-exp (args body)
       ;   (lambda-no-args-proc body local-env)
-        (closure (list args) (list body) local-env)
+        (closure args body local-env)
       ]
       [let-exp (vars body)
         (eval-bodies body
@@ -110,13 +110,46 @@
   (lambda (proc-value args)
     (cases proc-val proc-value
       [prim-proc (op) (apply-prim-proc op args)]
-      [closure (arg-names bodies local-env) (eval-bodies bodies (extend-env arg-names args local-env))]
+      [closure (arg-names bodies local-env) 
+        (cond 
+          [(symbol? arg-names) 
+            (eval-bodies bodies (extend-env (list arg-names) (list args) local-env))
+          ]
+          [(list? arg-names) 
+            (eval-bodies bodies (extend-env arg-names args local-env))
+          ]
+          [else 
+            (eval-bodies 
+              bodies 
+              (extend-env 
+                (flatten arg-names) 
+                (let loop ([arg-names arg-names] [ls args]) 
+                  (if (symbol? (cdr arg-names))
+                    (list (car ls) (cdr ls))
+                    (cons (car ls) (loop (cdr arg-names) (cdr ls)))
+                  )
+                )
+                local-env)
+            )
+          ]
+        )
+      ]
 			; You will add other cases
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
 
-
+(define flatten
+  (lambda (iL)
+    (if (null? iL) 
+      '()
+      (if (symbol? (cdr iL))
+        (list (car iL) (cdr iL))
+        (cons (car iL) (flatten (cdr iL)))
+      )
+    )
+  )
+)
 
 
 ; Usually an interpreter must define each 

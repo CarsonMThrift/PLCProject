@@ -91,7 +91,7 @@
                             )
                         ]
                         [(or (symbol? (2nd datum)) (and (not (list? (2nd datum))) (pair? (2nd datum)))) ; variable args
-                            (lambda-variable-args-exp (2nd datum) (parse-exp (cddr datum)))
+                            (lambda-variable-args-exp (2nd datum) (map parse-exp (cddr datum)))
                         ]
                         [else (eopl:error 'parse-exp "lambda-expression: bad lambda expression: ~s" datum)
 ]

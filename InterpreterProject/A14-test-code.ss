@@ -329,10 +329,11 @@
   (test-lambda-regression-tests)
   (display 'lambda-with-variable-args) 
   (test-lambda-with-variable-args)
-  (display 'syntactic-expansion) 
-  (test-syntactic-expansion)    
   (display 'one-armed-if) 
   (test-one-armed-if)
+  (display 'syntactic-expansion) 
+  (test-syntactic-expansion)    
+  
 
 )
 

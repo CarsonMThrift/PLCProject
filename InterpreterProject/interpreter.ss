@@ -2,7 +2,7 @@
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not cons car cdr caar cadr cdar cddr 
                               caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? equal? atom? length 
                                list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
-                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map))
+                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map and or))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -47,18 +47,12 @@
                         (eval-rands rands local-env))])
           (apply-proc proc-value args))]
       [lambda-body-not-list-exp (args body) 
-        ;(lambda-body-not-list-proc args body local-env)
         (closure args body local-env)
       ]
       [lambda-body-is-list-exp (args body)
-      ;   (lambda-body-is-list-proc args body local-env)
         (closure args (list body) local-env)
       ]
-      ; [lambda-no-args-exp (body)
-      ;   (closure '() body local-env)
-      ; ]
       [lambda-variable-args-exp (args body)
-      ;   (lambda-no-args-proc body local-env)
         (closure args body local-env)
       ]
       [let-exp (vars body)
@@ -223,6 +217,8 @@
           (map (lambda (x) (apply-proc p (list x))) (2nd args))
         )
       ]
+      [(and) (andmap (lambda (x) (and #t x)) args)]
+      [(or) (ormap (lambda (x) (or x #f)) args)]
 
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
@@ -240,8 +236,33 @@
 (define eval-one-exp
   (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
 
-  (define syntax-expand 
-    (lambda (exp)
-        exp
-    )
+(define syntax-expand 
+  (lambda (exp)
+    exp
+    ; (cases e (cadr (cadr (caaddr (caaddr (exp)))))
+      ; and
+      ; [and 
+      ;   (lambda-body-is-list-exp 
+      ;     (caddr (caaddr (caaddr (exp)))) ; args, sinced it's parsed we gotta go DEEP. obvi this isnt' right
+      ;     (and (caddr (caaddr (caaddr (exp))))) ; body
+      ;   )
+      ; ]
+
+      ; or
+      ; [or 
+      ;   (lambda-body-is-list-exp 
+      ;     (caddr (caaddr (caaddr (exp)))) ; args, sinced it's parsed we gotta go DEEP. obvi this isnt' right
+      ;     (or (caddr (caaddr (caaddr (exp))))) ; body
+      ;   )
+      ; ]
+
+      ; [else exp]
+      ; begin
+
+      ; cond
+      
+      ; let*
+
+    ; )
   )
+)

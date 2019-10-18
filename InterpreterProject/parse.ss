@@ -179,6 +179,10 @@
                     [else (set!-exp (2nd datum) (parse-exp (3rd datum)))]
                 )    
             ]
+            [(eqv? (car datum) 'cond)
+                (cond-exp (map parse-exp (cdr datum)))
+
+            ]
             [else   
                 (cond 
                     [(> (length datum) 2)
@@ -246,6 +250,7 @@
                 (append (list (unparse-exp rator))
                 (map unparse-exp rands))
             ]
+            [cond-exp (bodies) (list 'cond (map unparse-exp bodies))]
         )
     )
 )

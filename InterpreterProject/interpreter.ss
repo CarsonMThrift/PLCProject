@@ -238,8 +238,11 @@
 
 (define syntax-expand 
   (lambda (exp)
-    exp
-    ; (cases expression exp)
+    ; exp
+    (cases expression exp)
+      [cond-exp (bodies)
+        (map (lambda (body) (if (car body) (cdr body))) bodies)
+      ]
       ; [app-exp (rator rands)
       ;     (let ([proc-value (unparse-exp rator)]
       ;           [args (if (equal? rator (var-exp 'quote)) ; special case for quote
@@ -254,10 +257,10 @@
       ; ]
 
 
-      ; [else exp]
+      [else exp]
     
     ; 
 
-    ; )
+    )
   )
 )

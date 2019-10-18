@@ -58,6 +58,9 @@
         (var symbol?)
         (body expression?)
     ]
+    [cond-exp
+        (bodies (list-of expression?))
+    ]
 )
 
 	

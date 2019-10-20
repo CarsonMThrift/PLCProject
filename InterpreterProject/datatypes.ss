@@ -59,7 +59,7 @@
         (body expression?)
     ]
     [cond-exp
-        (bodies (list-of expression?))
+        (bodies (list-of list?))
     ]
 )
 

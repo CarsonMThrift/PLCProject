@@ -59,7 +59,13 @@
 
 (define var-assign-list? (lambda (ls) (and (list? ls) (= 2 (length ls)) (symbol? (car ls)))))
 
-(define parse-exp         
+(define parse-exp 
+    (lambda (datum)
+        (syntax-expand (parse-exp-helper datum))
+    )
+)
+
+(define parse-exp-helper         
   (lambda (datum)
     (cond
         [(symbol? datum) (var-exp datum)]
@@ -180,8 +186,7 @@
                 )    
             ]
             [(eqv? (car datum) 'cond)
-                (cond-exp (map parse-exp (cdr datum)))
-
+                (cond-exp (cdr datum))
             ]
             [else   
                 (cond 

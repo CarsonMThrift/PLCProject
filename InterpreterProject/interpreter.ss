@@ -234,33 +234,36 @@
       (rep))))  ; tail-recursive, so stack doesn't grow.
 
 (define eval-one-exp
-  (lambda (x) (top-level-eval (syntax-expand (parse-exp x)))))
+  (lambda (x) (top-level-eval (parse-exp x))))
 
 (define syntax-expand 
   (lambda (exp)
     ; exp
-    (cases expression exp)
-      [cond-exp (bodies)
-        (map (lambda (body) (if (car body) (cdr body))) bodies)
+    (cases expression exp
+      [let-exp (vars body)
+        (app-exp (lambda-body-not-list (map car vars) body) (map cadr vars)) ;returns an equivalent application expression from the original parsed let expression
       ]
-      ; [app-exp (rator rands)
-      ;     (let ([proc-value (unparse-exp rator)]
-      ;           [args (if (equal? rator (var-exp 'quote)) ; special case for quote
-      ;                     (map unparse-exp rands)
-      ;                     (eval-rands rands local-env))])
-
-      ;       (cases symbol proc-value
-      ;         ['cond (parse-exp (map (lambda (arg-ls) ) args)]
-      ;         ['begin ()]
-      ;       )
-      ;     )
+      ; [cond-exp (bodies) 
+      ;     (parse-exp (cond-helper bodies))
       ; ]
-
-
       [else exp]
     
-    ; 
 
     )
   )
+)
+
+(define cond-helper
+  (lambda (bodies) ; function to map
+    ; (if (null? bodies)
+
+    ; )
+    ; (if (eq? (caar bodies) 'else) 
+    ;   (cadr bodies) 
+    ;   (if (caar bodies) 
+    ;     (cadr bodies)
+    ;     (cond-helper (cdr bodies))
+    ;   )
+    ; )
+  ) 
 )

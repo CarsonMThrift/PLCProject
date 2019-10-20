@@ -241,12 +241,27 @@
     ; exp
     (cases expression exp
       [let-exp (vars body)
-      (display (map car vars))
         (app-exp (lambda-body-not-list-exp (map unparse-exp (map cadr vars)) (map syntax-expand body)) (map syntax-expand (map caaddr vars))) ;returns an equivalent application expression from the original parsed let expression
       ]
-      ; [cond-exp (bodies) 
+      [cond-exp (bodies) 
+
+        (if (null? bodies)
+          (void)
+          (if (eq? (caar bodies) 'else)
+            ; (if-no-just #t (parse-exp (cadar bodies)))
+            (parse-exp (cadar bodies))
+            (if-exp (parse-exp (caar bodies)) (parse-exp (cadar bodies)) (syntax-expand (cond-exp (cdr bodies))))
+          )
+        )
           
-      ; ]
+        ; (letrec 
+        ;   ([helper (lambda (bodies) 
+        ;     (if (or (eq? (caar bodies) 'else) 
+        ;             (caar bodies)))
+        ;       (cadr bodies)
+        ;       (helper (cdr bodies)))])
+        ;   (helper bodies))
+      ]
       [else exp]
     
 

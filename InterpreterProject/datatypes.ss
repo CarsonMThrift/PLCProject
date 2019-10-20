@@ -31,7 +31,7 @@
     [if-exp
         (pred expression?)
         (then_case expression?)
-        (just_in_case expression?)
+        (just_in_case (lambda (x) (or (expression? x) (eq? (void) x))))
     ]
     [let-exp
         (vars (list-of pair?))
@@ -59,10 +59,9 @@
         (body expression?)
     ]
     [cond-exp
-        (bodies (list-of list?))
+        (bodies (list-of datum?))
     ]
 )
-
 	
 (define-datatype environment environment?
   (empty-env-record)

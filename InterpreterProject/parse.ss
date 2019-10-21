@@ -28,12 +28,12 @@
     (lambda (d)
         (or (null? d)
             (number? d) 
-            (symbol? d) 
+            ; (symbol? d) 
             (vector? d)
             (boolean? d)
             (char? d)
             (string? d)
-            ((list-of datum?) d) ; Is this right for quoted lists?
+            ; ((list-of datum?) d) ; Is this right for quoted lists? -> car = quote?
         )
     )
 )
@@ -70,8 +70,11 @@
     (cond
         [(symbol? datum) (var-exp datum)]
         [(null? datum) (lit-exp datum)]
-        [(and (list? datum) (not (null? (cdr datum))))
+        [(list? datum) ; come back to this if something breaks!
             (cond
+                [(eqv? (car datum) 'quote)
+                    (lit-exp (cadr datum))
+                ]
                 [(eqv? (car datum) 'lambda)
                     (cond 
                         [(null? (cddr datum))
@@ -126,7 +129,7 @@
                         (eopl:error 'parse-exp "Error in parse-exp decls: not a proper list of pairs of length 2: ~s" datum)
                     ]
                     [(list? (2nd datum)) ; unnamed           
-                        (let-exp (map parse-exp (2nd datum))
+                        (let-exp (map (lambda (x) (list (car x) (parse-exp (cadr x)))) (2nd datum))
                             (map parse-exp (cddr datum))
                         )
                     ]
@@ -189,19 +192,20 @@
                 (cond-exp (cdr datum))
             ]
             [else   
-                (cond 
-                    [(> (length datum) 2)
+                ; (cond 
+                    ; [()]
+                    ; [(> (length datum) 2)
                         (app-exp 
                             (parse-exp (1st datum)) 
                             (map parse-exp (cdr datum))
                         )
-                    ]
-                    [else 
-                        (app-exp (parse-exp (1st datum))
-                            (list (parse-exp (2nd datum)))
-                        )
-                    ]
-                )
+                    ; ]
+                    ; [else 
+                    ;     (app-exp (parse-exp (1st datum))
+                    ;         (list (parse-exp (2nd datum)))
+                    ;     )
+                    ; ]
+                ; )
             ]
         )
         ]

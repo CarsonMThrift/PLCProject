@@ -2,7 +2,7 @@
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not cons car cdr caar cadr cdar cddr 
                               caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? equal? atom? length 
                                list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
-                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map and or))
+                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map void and or))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -217,6 +217,7 @@
           (map (lambda (x) (apply-proc p (list x))) (2nd args))
         )
       ]
+      [(void) (void)]
       [(and) (andmap (lambda (x) (and #t x)) args)]
       [(or) (ormap (lambda (x) (or x #f)) args)]
 
@@ -241,12 +242,11 @@
     ; exp
     (cases expression exp
       [let-exp (vars body)
-        (app-exp (lambda-body-not-list-exp (map unparse-exp (map cadr vars)) (map syntax-expand body)) (map syntax-expand (map caaddr vars))) ;returns an equivalent application expression from the original parsed let expression
+        (app-exp (lambda-body-not-list-exp (map car vars) (map syntax-expand body)) (map syntax-expand (map cadr vars))) ;returns an equivalent application expression from the original parsed let expression
       ]
       [cond-exp (bodies) 
-
         (if (null? bodies)
-          (void)
+          (app-exp (var-exp 'void) '())
           (if (eq? (caar bodies) 'else)
             ; (if-no-just #t (parse-exp (cadar bodies)))
             (parse-exp (cadar bodies))
@@ -262,6 +262,8 @@
         ;       (helper (cdr bodies)))])
         ;   (helper bodies))
       ]
+      [app-exp (rator rands) (app-exp (syntax-expand rator) (map syntax-expand rands))]
+      ; fill in all others
       [else exp]
     
 

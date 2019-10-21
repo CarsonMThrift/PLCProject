@@ -6,7 +6,7 @@
         (var symbol?)
     ]
     [lit-exp
-        (val datum?)
+        (val (lambda (x) #t))
     ]
     [lambda-body-not-list-exp
         (args (list-of symbol?))
@@ -31,7 +31,7 @@
     [if-exp
         (pred expression?)
         (then_case expression?)
-        (just_in_case (lambda (x) (or (expression? x) (eq? (void) x))))
+        (just_in_case expression?)
     ]
     [let-exp
         (vars (list-of pair?))

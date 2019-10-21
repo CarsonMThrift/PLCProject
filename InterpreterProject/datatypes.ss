@@ -6,7 +6,7 @@
         (var symbol?)
     ]
     [lit-exp
-        (val (lambda (x) #t))
+        (val scheme-value?)
     ]
     [lambda-body-not-list-exp
         (args (list-of symbol?))
@@ -41,10 +41,6 @@
         (vars (list-of pair?))
         (body (list-of expression?))
     ]
-    [let*-body-is-list-exp
-        (vars (list-of pair?))
-        (body expression?)
-    ]
     [named-let-exp
         (name symbol?)
         (vars (list-of pair?))
@@ -59,7 +55,7 @@
         (body expression?)
     ]
     [cond-exp
-        (bodies (list-of datum?))
+        (bodies (list-of scheme-value?))
     ]
 )
 	

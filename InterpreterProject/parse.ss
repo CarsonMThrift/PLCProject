@@ -37,6 +37,15 @@
         )
     )
 )
+(define scheme-value?
+    (lambda (x) #t)
+)
+(define body?
+    (lambda (exp)
+        (or ((list-of expression?) exp) (expression? exp))
+    )
+)
+
 
 (define variable-args?
     (lambda (d) 
@@ -147,17 +156,22 @@
                     [(or (not ((list-of pair?) (2nd datum))) (not (andmap var-assign-list? (2nd datum))))
                         (eopl:error 'parse-exp "Error in parse-exp decls: not a proper list of pairs of length 2: ~s" datum)
                     ]
-                    [(list? (3rd datum))
-                        (let*-body-is-list-exp 
-                            (map parse-exp (2nd datum)) 
-                            (parse-exp (3rd datum))
-                        )
-                    ]
-                    [else (let*-body-not-list-exp 
-                            (map parse-exp (2nd datum))
+                    [(list? (2nd datum)) ; unnamed           
+                        (let*-body-not-list-exp (map (lambda (x) (list (car x) (parse-exp (cadr x)))) (2nd datum))
                             (map parse-exp (cddr datum))
                         )
                     ]
+                    ; [(list? (3rd datum))
+                    ;     (let*-body-is-list-exp 
+                    ;         (2nd datum)
+                    ;         (parse-exp (3rd datum))
+                    ;     )
+                    ; ]
+                    ; [else (let*-body-not-list-exp 
+                    ;         (map parse-exp (2nd datum))
+                    ;         (map parse-exp (cddr datum))
+                    ;     )
+                    ; ]
 
                 )
             ]
@@ -192,20 +206,10 @@
                 (cond-exp (cdr datum))
             ]
             [else   
-                ; (cond 
-                    ; [()]
-                    ; [(> (length datum) 2)
-                        (app-exp 
-                            (parse-exp (1st datum)) 
-                            (map parse-exp (cdr datum))
-                        )
-                    ; ]
-                    ; [else 
-                    ;     (app-exp (parse-exp (1st datum))
-                    ;         (list (parse-exp (2nd datum)))
-                    ;     )
-                    ; ]
-                ; )
+                (app-exp 
+                    (parse-exp (1st datum)) 
+                    (map parse-exp (cdr datum))
+                )     
             ]
         )
         ]
@@ -243,9 +247,9 @@
             [named-let-exp (name vars body)
                 (append (list 'let name vars) (map unparse-exp body))
             ]
-            [let*-body-is-list-exp (vars body) 
-                (list 'let* vars (unparse-exp body))
-            ]
+            ; [let*-body-is-list-exp (vars body) 
+            ;     (list 'let* vars (unparse-exp body))
+            ; ]
             [let*-body-not-list-exp (vars body) 
                 (append (list 'let* vars) (map unparse-exp body))
             ]

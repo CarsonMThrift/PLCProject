@@ -244,44 +244,34 @@
       [let-exp (vars body)
         (app-exp (lambda-body-not-list-exp (map car vars) (map syntax-expand body)) (map syntax-expand (map cadr vars))) ;returns an equivalent application expression from the original parsed let expression
       ]
+      ; [let*-body-not-list-exp (vars body) ]
+      [let*-body-not-list-exp (vars body) 
+        (if (null? (cdr vars))
+          (syntax-expand (let-exp vars body))
+          (syntax-expand (let-exp (list (car vars)) (list (syntax-expand (let*-body-not-list-exp (cdr vars) body)))))
+        )
+      ]
       [cond-exp (bodies) 
         (if (null? bodies)
           (app-exp (var-exp 'void) '())
           (if (eq? (caar bodies) 'else)
-            ; (if-no-just #t (parse-exp (cadar bodies)))
             (parse-exp (cadar bodies))
             (if-exp (parse-exp (caar bodies)) (parse-exp (cadar bodies)) (syntax-expand (cond-exp (cdr bodies))))
           )
         )
-          
-        ; (letrec 
-        ;   ([helper (lambda (bodies) 
-        ;     (if (or (eq? (caar bodies) 'else) 
-        ;             (caar bodies)))
-        ;       (cadr bodies)
-        ;       (helper (cdr bodies)))])
-        ;   (helper bodies))
       ]
       [app-exp (rator rands) (app-exp (syntax-expand rator) (map syntax-expand rands))]
-      ; fill in all others
+      [lambda-body-is-list-exp (args body) (lambda-body-is-list-exp args (syntax-expand body))]
+      [lambda-body-not-list-exp (args body) (lambda-body-not-list-exp args (map syntax-expand body))]
+      [if-exp (pred then_case just_in_case) (if-exp (syntax-expand pred) (syntax-expand then_case) (syntax-expand just_in_case))]
+      [if-exp-no-just (pred then_case) (if-exp-no-just (syntax-expand pred) (syntax-expand then_case))]
+      [var-exp (var) exp]
+      [lit-exp (val) exp]
+
+        ; fill in all others
       [else exp]
     
 
     )
   )
 )
-
-; (define cond-helper
-;   (lambda (bodies) ; function to map
-;     ; (if (null? bodies)
-
-;     ; )
-;     ; (if (eq? (caar bodies) 'else) 
-;     ;   (cadr bodies) 
-;     ;   (if (caar bodies) 
-;     ;     (cadr bodies)
-;     ;     (cond-helper (cdr bodies))
-;     ;   )
-;     ; )
-;   ) 
-; )

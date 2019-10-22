@@ -50,6 +50,7 @@
 (define variable-args?
     (lambda (d) 
         (or 
+            (null? d)
             (symbol? d)
             (and (pair? d) (not (list? d)))
         )
@@ -204,6 +205,12 @@
             ]
             [(eqv? (car datum) 'cond)
                 (cond-exp (cdr datum))
+            ]
+            [(eqv? (car datum) 'begin)
+                (begin-exp (cdr datum))
+            ]
+            [(eqv? (car datum) 'case)
+                (case-exp (2nd datum) (cddr datum))
             ]
             [else   
                 (app-exp 

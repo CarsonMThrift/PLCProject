@@ -57,6 +57,13 @@
     [cond-exp
         (bodies (list-of scheme-value?))
     ]
+    [begin-exp
+        (bodies (list-of scheme-value?))
+    ]
+    [case-exp
+        (condition scheme-value?)
+        (bodies (list-of scheme-value?))
+    ]
 )
 	
 (define-datatype environment environment?

@@ -2,7 +2,7 @@
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not cons car cdr caar cadr cdar cddr 
                               caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? equal? atom? length 
                                list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
-                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map void and or))
+                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map void and or memv))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -218,6 +218,7 @@
         )
       ]
       [(void) (void)]
+      [(memv) (memv (1st args) (2nd args))]
       [(and) (andmap (lambda (x) (and #t x)) args)]
       [(or) (ormap (lambda (x) (or x #f)) args)]
 
@@ -256,9 +257,27 @@
           (app-exp (var-exp 'void) '())
           (if (eq? (caar bodies) 'else)
             (parse-exp (cadar bodies))
-            (if-exp (parse-exp (caar bodies)) (parse-exp (cadar bodies)) (syntax-expand (cond-exp (cdr bodies))))
+            (if-exp (syntax-expand (parse-exp (caar bodies))) (parse-exp (cadar bodies)) (syntax-expand (cond-exp (cdr bodies))))
           )
         )
+      ]
+      [begin-exp (bodies)
+        (app-exp (lambda-body-not-list-exp '() (map syntax-expand (map parse-exp bodies))) '())
+      ]
+      [case-exp (condition bodies)
+        (syntax-expand (cond-exp
+          (letrec ([ow-owwww! 
+            (lambda (conditioner bodayeez) 
+                (if (eq? (caar bodayeez) 'else)
+                  (list (cons 'else (cdar bodayeez)))
+                  (cons (cons (list 'memv conditioner (quote (caar bodayeez))) (cdar bodayeez))
+                        (ow-owwww! conditioner (cdr bodayeez))
+                  )
+                )
+            )])
+            (ow-owwww! condition bodies)
+          )
+        ))
       ]
       [app-exp (rator rands) (app-exp (syntax-expand rator) (map syntax-expand rands))]
       [lambda-body-is-list-exp (args body) (lambda-body-is-list-exp args (syntax-expand body))]
@@ -267,6 +286,7 @@
       [if-exp-no-just (pred then_case) (if-exp-no-just (syntax-expand pred) (syntax-expand then_case))]
       [var-exp (var) exp]
       [lit-exp (val) exp]
+      
 
         ; fill in all others
       [else exp]

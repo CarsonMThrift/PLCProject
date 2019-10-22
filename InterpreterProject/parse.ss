@@ -69,12 +69,6 @@
 
 (define var-assign-list? (lambda (ls) (and (list? ls) (= 2 (length ls)) (symbol? (car ls)))))
 
-; (define parse-exp 
-;     (lambda (datum)
-;         (syntax-expand (parse-exp-helper datum))
-;     )
-; )
-
 (define parse-exp         
   (lambda (datum)
     (cond

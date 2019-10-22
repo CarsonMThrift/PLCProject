@@ -2,7 +2,7 @@
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not cons car cdr caar cadr cdar cddr 
                               caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? equal? atom? length 
                                list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
-                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map void and or memv))
+                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map void and or memv quotient))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -73,6 +73,14 @@
         (if (eval-exp pred local-env)
           (eval-exp then_case local-env)
           (void)
+        )
+      ]
+      [while-exp (test-exp bodies)
+        (if (eval-exp test-exp local-env) 
+          (begin
+            (eval-bodies bodies local-env)
+            (eval-exp exp local-env)
+          )
         )
       ]
 
@@ -156,6 +164,7 @@
       [(-) (apply - args)]
       [(*) (apply * args)]
       [(/) (apply / args)]
+      [(quotient) (quotient (1st args) (2nd args))]
       [(add1) (+ (1st args) 1)]
       [(sub1) (- (1st args) 1)]
       [(zero?) (zero? (1st args))]
@@ -270,7 +279,7 @@
             (lambda (conditioner bodayeez) 
                 (if (eq? (caar bodayeez) 'else)
                   (list (cons 'else (cdar bodayeez)))
-                  (cons (cons (list 'memv conditioner (caar bodayeez)) (cdar bodayeez))
+                  (cons (cons (list 'memv conditioner (list 'quote (caar bodayeez))) (cdar bodayeez))
                         (ow-owwww! conditioner (cdr bodayeez))
                   )
                 )

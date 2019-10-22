@@ -60,6 +60,10 @@
     [begin-exp
         (bodies (list-of scheme-value?))
     ]
+    [while-exp
+        (test-exp expression?)
+        (bodies (list-of expression?))
+    ]
     [case-exp
         (condition scheme-value?)
         (bodies (list-of scheme-value?))

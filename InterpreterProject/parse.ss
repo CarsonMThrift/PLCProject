@@ -206,6 +206,9 @@
             [(eqv? (car datum) 'case)
                 (case-exp (2nd datum) (cddr datum))
             ]
+            [(eqv? (car datum) 'while)
+                (while-exp (parse-exp (2nd datum)) (map parse-exp (cddr datum)))
+            ]
             [else   
                 (app-exp 
                     (parse-exp (1st datum)) 

@@ -270,7 +270,7 @@
             (lambda (conditioner bodayeez) 
                 (if (eq? (caar bodayeez) 'else)
                   (list (cons 'else (cdar bodayeez)))
-                  (cons (cons (list 'memv conditioner (quote (caar bodayeez))) (cdar bodayeez))
+                  (cons (cons (list 'memv conditioner (caar bodayeez)) (cdar bodayeez))
                         (ow-owwww! conditioner (cdr bodayeez))
                   )
                 )

@@ -83,6 +83,12 @@
           )
         )
       ]
+      ; [set!-exp (id exp)
+      ;   (set-ref! 
+      ;     (apply-env-ref env id ())
+      ;     (eval-exp exp env)
+      ;   )
+      ; ]
 
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 

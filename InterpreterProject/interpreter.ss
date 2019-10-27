@@ -295,7 +295,10 @@
       [if-exp-no-just (pred then_case) (if-exp-no-just (syntax-expand pred) (syntax-expand then_case))]
       [var-exp (var) exp]
       [lit-exp (val) exp]
-      
+      ; [letrec-exp (proc-names idss bodiess letrec-bodies) 
+      ;   (
+      ;   )
+      ; ]
 
         ; fill in all others
       [else exp]

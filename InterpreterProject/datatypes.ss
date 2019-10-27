@@ -47,8 +47,13 @@
         (body (list-of expression?))
     ]
     [letrec-exp
-        (vars (list-of pair?))
-        (body (list-of expression?))
+        (proc-names (list-of symbol?))
+        (idss (list-of (list-of symbol?)))
+        (bodiess (list-of (list-of expression)))
+        (letrec-bodies (list-of expression?))
+        ; was:
+        ; (vars (list-of pair?))
+        ; (body (list-of expression?))
     ]
     [set!-exp
         (var symbol?)

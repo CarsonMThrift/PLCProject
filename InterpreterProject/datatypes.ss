@@ -98,3 +98,27 @@
 
 (define scheme-value?
   (lambda (x) #t))
+
+; Cell ADT
+
+(define cell 
+    (lambda (v)
+        (cons v 'some-cell)
+    )
+)
+
+(define cell?
+    (lambda (x)
+        (and (pair? x) (eq? (cdr x) 'some-cell))
+    )
+)
+
+(define cell-ref car)
+
+(define cell-set! set-car!)
+
+; Reference ADT
+
+(define deref cell-ref)
+
+(define set-ref! cell-set!)

@@ -83,12 +83,23 @@
           )
         )
       ]
-      ; [set!-exp (id exp)
-      ;   (set-ref! 
-      ;     (apply-env-ref env id ())
-      ;     (eval-exp exp env)
-      ;   )
-      ; ]
+      [set!-exp (id exp)
+        (set-ref! 
+          (apply-env-ref env id 
+            (lambda (x) x) ; procedure to call if id is in the environment 
+            (lambda () 
+              (apply-env global-env id
+                (lambda (x) x)
+                (lambda () 
+                  (eopl:error 'apply-env
+                  "variable ~s is not bound"
+                  id))
+              )
+            )
+          )
+        )
+        (eval-exp exp env)
+      ]
 
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
@@ -301,15 +312,33 @@
       [if-exp-no-just (pred then_case) (if-exp-no-just (syntax-expand pred) (syntax-expand then_case))]
       [var-exp (var) exp]
       [lit-exp (val) exp]
-      ; [letrec-exp (proc-names idss bodiess letrec-bodies) 
-      ;   (
-      ;   )
-      ; ]
+      [letrec-exp (proc-names idss bodiess letrec-bodies) 
+        (let-exp 
+          (build-vars proc-names) 
+          (list 'begin-exp (build-bodies (map syntax-expand bodiess)) (map syntax-expand letrec-bodies))
+        ) 
+      ]
 
         ; fill in all others
       [else exp]
-    
+    )
+  )
+)
 
+(define build-vars
+  (lambda (proc-names)
+    (if (null? proc-names)
+      '()
+      (cons (list (car proc-names) '#f) (build-vars (cdr proc-names)))
+    )
+  )
+)
+
+(define build-bodies 
+  (lambda (proc-names bodiess)
+    (if (null? proc-names)
+      '()
+      (cons (list 'set!-exp (car proc-names) (car bodiess)) (build-bodies (cdr proc-names) (cdr bodiess)))
     )
   )
 )

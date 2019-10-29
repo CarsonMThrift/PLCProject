@@ -7,9 +7,7 @@
 
 (define extend-env
   (lambda (syms vals env)
-    (extended-env-record syms (map box vals) env)))
-    ; was:
-    ; (extended-env-record syms vals env)))
+    (extended-env-record syms (map cell vals) env)))
 
 (define list-find-position
   (lambda (sym los)
@@ -26,8 +24,8 @@
 		 #f))))))
 
 (define apply-env 
-  (lambda (env var)
-    (deref (apply-env-ref env var)) ; pass in funcs mentioned below?
+  (lambda (env var succeed fail)
+    (deref (apply-env-ref env var succeed fail)) ; pass in funcs mentioned below?
   )
 )
 
@@ -41,4 +39,5 @@
       	  (if 	(number? pos)
 				(succeed (list-ref vals pos)) ; succeed could just return the list-ref vals pos
 				(apply-env env sym succeed fail)))])))
+
 

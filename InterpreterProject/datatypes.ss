@@ -49,7 +49,7 @@
     [letrec-exp
         (proc-names (list-of symbol?))
         (idss (list-of (list-of symbol?)))
-        (bodiess (list-of (list-of expression)))
+        (bodiess (list-of (list-of expression?)))
         (letrec-bodies (list-of expression?))
         ; was:
         ; (vars (list-of pair?))

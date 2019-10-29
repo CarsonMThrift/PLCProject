@@ -178,16 +178,12 @@
                     [(null? (cddr datum)) 
                         (eopl:error 'parse-exp "Error in parse-expression: letrec expression: incorrect length: ~s" datum)
                     ]
-                    [else ;letrec-exp (proc-names idss bodiess letrec-bodies)
+                    [else
                         (letrec-exp
                             (map car (2nd datum))
                             (map 2nd (map cadr (2nd datum)))
-                            (map parse-exp (map cdr (2nd datum)))
-                            ; '()
-                            '()
-                            
-                            
-                            ; (map parse-exp (cddr datum))
+                            (map parse-exp (map caddr (map cadr (2nd datum))))
+                            (map parse-exp (cddr datum))
                         )
 
                         ; was:

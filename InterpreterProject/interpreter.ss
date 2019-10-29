@@ -255,12 +255,10 @@
 
 (define syntax-expand 
   (lambda (exp)
-    ; exp
     (cases expression exp
       [let-exp (vars body)
         (app-exp (lambda-body-not-list-exp (map car vars) (map syntax-expand body)) (map syntax-expand (map cadr vars))) ;returns an equivalent application expression from the original parsed let expression
       ]
-      ; [let*-body-not-list-exp (vars body) ]
       [let*-body-not-list-exp (vars body) 
         (if (null? (cdr vars))
           (syntax-expand (let-exp vars body))

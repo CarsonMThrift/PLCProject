@@ -182,7 +182,7 @@
                         (letrec-exp
                             (map car (2nd datum))
                             (map 2nd (map cadr (2nd datum)))
-                            (map parse-exp (map caddr (map cadr (2nd datum))))
+                            (map (lambda (x) (map parse-exp x)) (map cddr (map cadr (2nd datum))))
                             (map parse-exp (cddr datum))
                         )
 

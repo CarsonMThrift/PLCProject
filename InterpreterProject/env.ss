@@ -35,9 +35,9 @@
       [empty-env-record ()       ;  fail is applied.
         (fail)] ; fail could be an error saying the sym wasn't found
       [extended-env-record (syms vals env)
-		(let ((pos (list-find-position sym syms)))
-      	  (if 	(number? pos)
-				(succeed (list-ref vals pos)) ; succeed could just return the list-ref vals pos
-				(apply-env env sym succeed fail)))])))
+        (let ((pos (list-find-position sym syms)))
+              (if (number? pos)
+                (succeed (list-ref vals pos)) ; succeed could just return the list-ref vals pos
+                (apply-env env sym succeed fail)))])))
 
 

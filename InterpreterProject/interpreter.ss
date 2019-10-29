@@ -85,10 +85,10 @@
       ]
       [set!-exp (id exp)
         (set-ref! 
-          (apply-env-ref env id 
+          (apply-env-ref local-env id 
             (lambda (x) x) ; procedure to call if id is in the environment 
             (lambda () 
-              (apply-env global-env id
+              (apply-env-ref global-env id
                 (lambda (x) x)
                 (lambda () 
                   (eopl:error 'apply-env
@@ -97,8 +97,8 @@
               )
             )
           )
+          (eval-exp exp local-env)
         )
-        (eval-exp exp env)
       ]
 
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
@@ -311,10 +311,12 @@
       [var-exp (var) exp]
       [lit-exp (val) exp]
       [letrec-exp (proc-names idss bodiess letrec-bodies) 
-        (let-exp 
-          (build-vars proc-names) 
-          (list 'begin-exp (build-bodies (map syntax-expand bodiess)) (map syntax-expand letrec-bodies))
-        ) 
+        (syntax-expand 
+          (let-exp 
+            (build-vars proc-names) 
+            (append (build-bodies proc-names (map (lambda (x) (map syntax-expand x)) bodiess) idss) (map syntax-expand letrec-bodies))
+          )
+        )
       ]
 
         ; fill in all others
@@ -327,16 +329,16 @@
   (lambda (proc-names)
     (if (null? proc-names)
       '()
-      (cons (list (car proc-names) '#f) (build-vars (cdr proc-names)))
+      (cons (list (car proc-names) (lit-exp '#f)) (build-vars (cdr proc-names)))
     )
   )
 )
 
 (define build-bodies 
-  (lambda (proc-names bodiess)
+  (lambda (proc-names bodiess idss)
     (if (null? proc-names)
       '()
-      (cons (list 'set!-exp (car proc-names) (car bodiess)) (build-bodies (cdr proc-names) (cdr bodiess)))
+      (cons (set!-exp (car proc-names) (lambda-body-not-list-exp (car idss) (car bodiess))) (build-bodies (cdr proc-names) (cdr bodiess) (cdr idss)))
     )
   )
 )

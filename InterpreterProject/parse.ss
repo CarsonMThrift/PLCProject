@@ -185,12 +185,6 @@
                             (map (lambda (x) (map parse-exp x)) (map cddr (map cadr (2nd datum))))
                             (map parse-exp (cddr datum))
                         )
-
-                        ; was:
-                        ; (letrec-exp 
-                        ;     (map parse-exp (2nd datum))
-                        ;     (map parse-exp (cddr datum))
-                        ; )
                     ]
 
                 )
@@ -266,9 +260,9 @@
             [let*-body-not-list-exp (vars body) 
                 (append (list 'let* vars) (map unparse-exp body))
             ]
-            [letrec-exp (vars body)
-                (append (list 'letrec (map unparse-exp vars)) (map unparse-exp body))
-            ]
+            ; [letrec-exp (proc-name idss bodiess letrec-bodies)
+            ;     (append (list 'letrec proc-names (map unparse-exp )) (map unparse-exp body))
+            ; ]
             [set!-exp (var body)
                 (list 'set! var (unparse-exp body))
             ]
@@ -277,6 +271,10 @@
                 (map unparse-exp rands))
             ]
             [cond-exp (bodies) (list 'cond (map unparse-exp bodies))]
+            [letrec-exp (proc-names idss bodiess letrec-bodies) (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
+            [begin-exp (bodies) (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
+            [while-exp (test-exp bodies) (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
+            [case-exp (condition bodies) (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
         )
     )
 )

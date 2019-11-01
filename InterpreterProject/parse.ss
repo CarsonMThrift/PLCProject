@@ -106,8 +106,7 @@
                         [(or (symbol? (2nd datum)) (and (not (list? (2nd datum))) (pair? (2nd datum)))) ; variable args
                             (lambda-variable-args-exp (2nd datum) (map parse-exp (cddr datum)))
                         ]
-                        [else (eopl:error 'parse-exp "lambda-expression: bad lambda expression: ~s" datum)
-]
+                        [else (eopl:error 'parse-exp "lambda-expression: bad lambda expression: ~s" datum)]
                     )    
             ]
             [(eqv? (car datum) 'if)
@@ -223,6 +222,9 @@
             ]
             [(eqv? (car datum) 'while)
                 (while-exp (parse-exp (2nd datum)) (map parse-exp (cddr datum)))
+            ]
+            [(eqv? (car datum) 'define)
+                (define-exp (2nd datum) (parse-exp (3rd datum)))
             ]
             [else   
                 (app-exp 

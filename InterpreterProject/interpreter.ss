@@ -13,12 +13,22 @@
 
 (define global-env init-env)
 
+(define reset-global-env
+  (lambda () (set! global-env (init-env)))
+)
 
 ; top-level-eval evaluates a form in the global environment
 (define top-level-eval
   (lambda (form)
     ; later we may add things that are not expressions.
-    (eval-exp form (empty-env))))
+    (cases expression form
+      [define-exp (name definition) 
+        (set! global-env (extend-env (list name) (eval-exp definition (empty-env)) global-env))
+      ]
+      [else (eval-exp form (empty-env))]
+    )
+  )
+)
 
 ; eval-exp is the main component of the interpreter
 
@@ -29,7 +39,7 @@
       [var-exp (id)
 				(apply-env local-env id; look up its value.
       	  (lambda (x) x) ; procedure to call if id is in the environment 
-          (lambda () 
+          (lambda ()  
             (apply-env-ref global-env id
               (lambda (x) x)
               (lambda () 
@@ -105,7 +115,7 @@
         )
         
       ]
-
+      [define-exp (name defintion) (top-level-eval exp)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
@@ -330,6 +340,7 @@
 
           ; (list (syntax-expand (begin-exp (append (build-bodies proc-names (map syntax-expand (car bodiess))) (map syntax-expand letrec-bodies)))))
       ]
+      [define-exp (name definition) (define-exp name (syntax-expand definition))]
 
         ; fill in all others
       [else exp]

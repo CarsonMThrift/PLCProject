@@ -73,6 +73,10 @@
         (condition scheme-value?)
         (bodies (list-of scheme-value?))
     ]
+    [define-exp 
+        (name symbol?)
+        (definition expression?)
+    ]
 )
 	
 (define-datatype environment environment?

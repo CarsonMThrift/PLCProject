@@ -23,7 +23,7 @@
     ; later we may add things that are not expressions.
     (cases expression form
       [define-exp (name definition) 
-        (set! global-env (extend-env (list name) (eval-exp definition (empty-env)) global-env))
+        (set! global-env (extend-env (list name) (list (eval-exp definition (empty-env))) global-env))
       ]
       [else (eval-exp form (empty-env))]
     )

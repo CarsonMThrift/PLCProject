@@ -1,7 +1,7 @@
 
-(define *prim-proc-names* '(+ - * / add1 sub1 zero? not cons car cdr caar cadr cdar cddr 
-                              caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? equal? atom? length 
-                               list->vector list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
+(define *prim-proc-names* '(+ - * / add1 sub1 zero? not append cons car cdr caar cadr cdar cddr 
+                              caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? eqv? equal? atom? length 
+                               list->vector list-tail list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
                                 symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map void and or memv quotient))
 
 (define init-env         ; for now, our initial global environment only contains 
@@ -30,7 +30,7 @@
 				(apply-env local-env id; look up its value.
       	  (lambda (x) x) ; procedure to call if id is in the environment 
           (lambda () 
-            (apply-env global-env id
+            (apply-env-ref global-env id
               (lambda (x) x)
               (lambda () 
                 (eopl:error 'apply-env
@@ -55,14 +55,14 @@
       [lambda-variable-args-exp (args body)
         (closure args body local-env)
       ]
-      [let-exp (vars body)
-        (eval-bodies body
-          (extend-env (map unparse-exp (map cadr vars))
-                      (eval-rands (map caaddr vars) local-env)
-                      local-env
-          )
-        )
-      ]
+      ; [let-exp (vars body)
+      ;   (eval-bodies body
+      ;     (extend-env (map unparse-exp (map cadr vars))
+      ;                 (eval-rands (map caaddr vars) local-env)
+      ;                 local-env
+      ;     )
+      ;   )
+      ; ]
       [if-exp (pred then_case just_in_case)
         (if (eval-exp pred local-env)
           (eval-exp then_case local-env)
@@ -84,6 +84,10 @@
         )
       ]
       [set!-exp (id exp)
+        ; (display id)
+        ; (newline)
+        ; (display exp)
+        ; (newline)
         (set-ref! 
           (apply-env-ref local-env id 
             (lambda (x) x) ; procedure to call if id is in the environment 
@@ -99,6 +103,7 @@
           )
           (eval-exp exp local-env)
         )
+        
       ]
 
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
@@ -186,6 +191,7 @@
       [(sub1) (- (1st args) 1)]
       [(zero?) (zero? (1st args))]
       [(not) (not (1st args))]
+      [(append) (apply append args)]
       [(cons) (cons (1st args) (2nd args))]
       [(car) (car (1st args))] 
       [(cdr) (cdr (1st args))] 
@@ -205,10 +211,12 @@
       [(null?) (null? (1st args))] 
       [(assq) (assq (1st args) (2nd args))] 
       [(eq?) (eq? (1st args) (2nd args))] 
+      [(eqv?) (eqv? (1st args) (2nd args))] 
       [(equal?) (equal? (1st args) (2nd args))] 
       [(atom?) (atom? (1st args))] 
       [(length) (length (1st args))] 
       [(list->vector) (list->vector (1st args))] 
+      [(list-tail) (list-tail (1st args) (2nd args))]
       [(list?) (list? (1st args))] 
       [(pair?) (pair? (1st args))]
       [(procedure?) (proc-val? (if (list? args) (1st args) args))]
@@ -286,7 +294,7 @@
         )
       ]
       [begin-exp (bodies)
-        (app-exp (lambda-body-not-list-exp '() (map syntax-expand (map parse-exp bodies))) '())
+        (app-exp (lambda-body-not-list-exp '() (map syntax-expand bodies)) '())
       ]
       [case-exp (condition bodies)
         (syntax-expand (cond-exp
@@ -313,10 +321,14 @@
       [letrec-exp (proc-names idss bodiess letrec-bodies) 
         (syntax-expand 
           (let-exp 
-            (build-vars proc-names) 
-            (append (build-bodies proc-names (map (lambda (x) (map syntax-expand x)) bodiess) idss) (map syntax-expand letrec-bodies))
+            (build-vars proc-names)
+            (list (begin-exp (append (build-bodies proc-names idss (map (lambda (x) (map syntax-expand x)) bodiess)) (map syntax-expand letrec-bodies))))
           )
         )
+
+
+
+          ; (list (syntax-expand (begin-exp (append (build-bodies proc-names (map syntax-expand (car bodiess))) (map syntax-expand letrec-bodies)))))
       ]
 
         ; fill in all others
@@ -329,16 +341,16 @@
   (lambda (proc-names)
     (if (null? proc-names)
       '()
-      (cons (list (car proc-names) (lit-exp '#f)) (build-vars (cdr proc-names)))
+      (cons (list (car proc-names) (lit-exp 3)) (build-vars (cdr proc-names)))
     )
   )
 )
 
 (define build-bodies 
-  (lambda (proc-names bodiess idss)
+  (lambda (proc-names idss bodiess)
     (if (null? proc-names)
       '()
-      (cons (set!-exp (car proc-names) (lambda-body-not-list-exp (car idss) (car bodiess))) (build-bodies (cdr proc-names) (cdr bodiess) (cdr idss)))
+      (cons (set!-exp (car proc-names) (lambda-body-not-list-exp (car idss) (car bodiess))) (build-bodies (cdr proc-names) (cdr idss) (cdr bodiess)))
     )
   )
 )

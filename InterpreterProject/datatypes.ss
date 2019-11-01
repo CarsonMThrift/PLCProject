@@ -76,11 +76,20 @@
 )
 	
 (define-datatype environment environment?
-  (empty-env-record)
-  (extended-env-record
-   (syms (list-of variable-args?))
-   (vals (list-of scheme-value?))
-   (env environment?)))
+    (empty-env-record)
+    (extended-env-record
+        (syms (list-of variable-args?))
+        (vals (list-of scheme-value?))
+        (env environment?))
+    (recursively-extended-env-record
+        (proc-names (list-of symbol?))
+        (idss (list-of symbol?))
+        (bodiess (list-of (list-of expression?)))
+        (env environment?)
+    )
+
+   
+)
    
 ; datatype for procedures.  At first there is only one
 ; kind of procedure, but more kinds will be added later.
@@ -99,23 +108,23 @@
 (define scheme-value?
   (lambda (x) #t))
 
-; Cell ADT
+; Box ADT
 
 (define cell 
     (lambda (v)
-        (cons v 'some-cell)
+        (box v)
     )
 )
 
 (define cell?
     (lambda (x)
-        (and (pair? x) (eq? (cdr x) 'some-cell))
+        (box? x)
     )
 )
 
-(define cell-ref car)
+(define cell-ref unbox)
 
-(define cell-set! set-car!)
+(define cell-set! set-box!)
 
 ; Reference ADT
 

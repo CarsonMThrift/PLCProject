@@ -129,18 +129,24 @@
                     [(null? (cddr datum))
                         (eopl:error 'parse-exp "Error in parse-expression: let expression: incorrect length: ~s" datum)
                     ]
-                    [(or (not ((list-of pair?) (2nd datum))) (not (andmap var-assign-list? (2nd datum))))
-                        (eopl:error 'parse-exp "Error in parse-exp decls: not a proper list of pairs of length 2: ~s" datum)
-                    ]
+                    ; [(or (not ((list-of pair?) (2nd datum))) (not (andmap var-assign-list? (2nd datum))))
+                    ;     (eopl:error 'parse-exp "Error in parse-exp decls: not a proper list of pairs of length 2: ~s" datum)
+                    ; ]
                     [(list? (2nd datum)) ; unnamed           
                         (let-exp (map (lambda (x) (list (car x) (parse-exp (cadr x)))) (2nd datum))
                             (map parse-exp (cddr datum))
                         )
                     ]
                     [else 
-                        (named-let-exp (2nd datum)
-                            (3rd datum)
-                            (map parse-exp (cddr datum))
+                        ; (named-let-exp (2nd datum)
+                        ;     (3rd datum)
+                        ;     (map parse-exp (cddr datum))
+                        ; )
+                        (letrec-exp 
+                            (list (2nd datum))
+                            (list (map car (3rd datum)))
+                            (list (list (parse-exp (4th datum))))
+                            (list (parse-exp (cons (2nd datum) (map cadr (3rd datum)))))
                         )
                     ]
                 ) 
@@ -181,10 +187,16 @@
                     [else
                         (letrec-exp
                             (map car (2nd datum))
-                            (map 2nd (map cadr (2nd datum)))
+                            (map 2nd (map 2nd (2nd datum)))
                             (map (lambda (x) (map parse-exp x)) (map cddr (map cadr (2nd datum))))
                             (map parse-exp (cddr datum))
                         )
+
+                        ; was:
+                        ; (letrec-exp 
+                        ;     (map parse-exp (2nd datum))
+                        ;     (map parse-exp (cddr datum))
+                        ; )
                     ]
 
                 )
@@ -204,7 +216,7 @@
                 (cond-exp (cdr datum))
             ]
             [(eqv? (car datum) 'begin)
-                (begin-exp (cdr datum))
+                (begin-exp (map parse-exp (cdr datum)))
             ]
             [(eqv? (car datum) 'case)
                 (case-exp (2nd datum) (cddr datum))
@@ -260,9 +272,9 @@
             [let*-body-not-list-exp (vars body) 
                 (append (list 'let* vars) (map unparse-exp body))
             ]
-            ; [letrec-exp (proc-name idss bodiess letrec-bodies)
-            ;     (append (list 'letrec proc-names (map unparse-exp )) (map unparse-exp body))
-            ; ]
+            [letrec-exp (proc-names idss bodiess letrec-bodies)
+                (append (list 'letrec proc-names idss (map unparse-exp bodiess) (map unparse-exp letrec-bodies)))
+            ]
             [set!-exp (var body)
                 (list 'set! var (unparse-exp body))
             ]
@@ -271,10 +283,10 @@
                 (map unparse-exp rands))
             ]
             [cond-exp (bodies) (list 'cond (map unparse-exp bodies))]
-            [letrec-exp (proc-names idss bodiess letrec-bodies) (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
-            [begin-exp (bodies) (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
-            [while-exp (test-exp bodies) (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
-            [case-exp (condition bodies) (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)]
+            [begin-exp (bodies) exp]
+            [while-exp (test-exp bodies) exp]
+            [case-exp (condition bodies) exp]
+
         )
     )
 )

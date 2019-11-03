@@ -226,6 +226,9 @@
             [(eqv? (car datum) 'define)
                 (define-exp (2nd datum) (parse-exp (3rd datum)))
             ]
+            [(eqv? (car datum) 'or)
+                (or-exp (map parse-exp (cdr datum)))
+            ]
             [else   
                 (app-exp 
                     (parse-exp (1st datum)) 

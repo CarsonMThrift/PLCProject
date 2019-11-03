@@ -73,6 +73,9 @@
         (condition scheme-value?)
         (bodies (list-of scheme-value?))
     ]
+    [or-exp 
+        (bodies (list-of expression?))
+    ]
     [define-exp 
         (name symbol?)
         (definition expression?)

@@ -2,7 +2,7 @@
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not append cons car cdr caar cadr cdar cddr 
                               caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? eqv? equal? atom? length 
                                list->vector list-tail list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
-                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map void and or memv quotient))
+                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map void and memv quotient))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -65,14 +65,6 @@
       [lambda-variable-args-exp (args body)
         (closure args body local-env)
       ]
-      ; [let-exp (vars body)
-      ;   (eval-bodies body
-      ;     (extend-env (map unparse-exp (map cadr vars))
-      ;                 (eval-rands (map caaddr vars) local-env)
-      ;                 local-env
-      ;     )
-      ;   )
-      ; ]
       [if-exp (pred then_case just_in_case)
         (if (eval-exp pred local-env)
           (eval-exp then_case local-env)
@@ -94,10 +86,6 @@
         )
       ]
       [set!-exp (id exp)
-        ; (display id)
-        ; (newline)
-        ; (display exp)
-        ; (newline)
         (set-ref! 
           (apply-env-ref local-env id 
             (lambda (x) x) ; procedure to call if id is in the environment 
@@ -264,11 +252,12 @@
       [(void) (void)]
       [(memv) (memv (1st args) (2nd args))]
       [(and) (andmap (lambda (x) (and #t x)) args)]
-      [(or) (ormap (lambda (x) (or x #f)) args)]
+      ; [(or) (ormap (lambda (x) (or x #f)) args)]
 
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-op)])))
+
 
 (define rep      ; "read-eval-print" loop.
   (lambda ()
@@ -334,14 +323,22 @@
             (build-vars proc-names)
             (list (begin-exp (append (build-bodies proc-names idss (map (lambda (x) (map syntax-expand x)) bodiess)) (map syntax-expand letrec-bodies))))
           )
-        )
-
-
-
-          ; (list (syntax-expand (begin-exp (append (build-bodies proc-names (map syntax-expand (car bodiess))) (map syntax-expand letrec-bodies)))))
-      ]
+        )      ]
       [define-exp (name definition) (define-exp name (syntax-expand definition))]
-
+      [or-exp (bodies) 
+        (syntax-expand (letrec ([helper-barely-know-her?!?
+          (lambda (bodies)
+            (if (null? bodies)
+              (lit-exp #f)
+              (let-exp (list (list 'benq (car bodies))) 
+                (list (if-exp (var-exp 'benq) (var-exp 'benq) (helper-barely-know-her?!? (cdr bodies))))
+              )
+            )          
+          )
+          
+          ]) 
+        (helper-barely-know-her?!? bodies)))
+      ]
         ; fill in all others
       [else exp]
     )

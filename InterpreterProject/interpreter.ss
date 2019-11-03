@@ -14,7 +14,7 @@
 (define global-env init-env)
 
 (define reset-global-env
-  (lambda () (set! global-env (init-env)))
+  (lambda () (set! global-env init-env))
 )
 
 ; top-level-eval evaluates a form in the global environment

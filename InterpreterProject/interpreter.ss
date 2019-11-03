@@ -56,11 +56,8 @@
                         (map unparse-exp rands)
                         (eval-rands rands local-env))])
           (apply-proc proc-value args))]
-      [lambda-body-not-list-exp (args body) 
+      [lambda-exp (args body) 
         (closure args body local-env)
-      ]
-      [lambda-body-is-list-exp (args body)
-        (closure args (list body) local-env)
       ]
       [lambda-variable-args-exp (args body)
         (closure args body local-env)
@@ -275,7 +272,7 @@
   (lambda (exp)
     (cases expression exp
       [let-exp (vars body)
-        (app-exp (lambda-body-not-list-exp (map car vars) (map syntax-expand body)) (map syntax-expand (map cadr vars))) ;returns an equivalent application expression from the original parsed let expression
+        (app-exp (lambda-exp (map car vars) (map syntax-expand body)) (map syntax-expand (map cadr vars))) ;returns an equivalent application expression from the original parsed let expression
       ]
       [let*-body-not-list-exp (vars body) 
         (if (null? (cdr vars))
@@ -293,7 +290,7 @@
         )
       ]
       [begin-exp (bodies)
-        (app-exp (lambda-body-not-list-exp '() (map syntax-expand bodies)) '())
+        (app-exp (lambda-exp '() (map syntax-expand bodies)) '())
       ]
       [case-exp (condition bodies)
         (syntax-expand (cond-exp
@@ -311,8 +308,7 @@
         ))
       ]
       [app-exp (rator rands) (app-exp (syntax-expand rator) (map syntax-expand rands))]
-      [lambda-body-is-list-exp (args body) (lambda-body-is-list-exp args (syntax-expand body))]
-      [lambda-body-not-list-exp (args body) (lambda-body-not-list-exp args (map syntax-expand body))]
+      [lambda-exp (args body) (lambda-exp args (map syntax-expand body))]
       [if-exp (pred then_case just_in_case) (if-exp (syntax-expand pred) (syntax-expand then_case) (syntax-expand just_in_case))]
       [if-exp-no-just (pred then_case) (if-exp-no-just (syntax-expand pred) (syntax-expand then_case))]
       [var-exp (var) exp]
@@ -358,7 +354,7 @@
   (lambda (proc-names idss bodiess)
     (if (null? proc-names)
       '()
-      (cons (set!-exp (car proc-names) (lambda-body-not-list-exp (car idss) (car bodiess))) (build-bodies (cdr proc-names) (cdr idss) (cdr bodiess)))
+      (cons (set!-exp (car proc-names) (lambda-exp (car idss) (car bodiess))) (build-bodies (cdr proc-names) (cdr idss) (cdr bodiess)))
     )
   )
 )

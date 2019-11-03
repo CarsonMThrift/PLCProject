@@ -8,13 +8,9 @@
     [lit-exp
         (val scheme-value?)
     ]
-    [lambda-body-not-list-exp
+    [lambda-exp
         (args (list-of symbol?))
         (body (list-of expression?))
-    ]
-    [lambda-body-is-list-exp
-        (args (list-of symbol?))
-        (body expression?)
     ]
     [lambda-variable-args-exp
         (args variable-args?)

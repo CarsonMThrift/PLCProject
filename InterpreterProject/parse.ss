@@ -88,17 +88,7 @@
                             (if ((list-of symbol?) (2nd datum))
                                 (if (null? (cddr datum)) ;no body
                                     (eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)
-                                    (if (list? (3rd datum))
-                                        (lambda-body-is-list-exp 
-                                            (2nd datum)  
-                                            (if (null? (cdddr datum))
-                                                (parse-exp (3rd datum))
-                                                (letrec ([helper (lambda (x) (if (null? (cdr x)) (parse-exp (car x)) (helper (cdr x))))])
-                                                    (helper (cddr datum)))
-                                            )
-                                        )
-                                        (lambda-body-not-list-exp (2nd datum) (map parse-exp (cddr datum)))
-                                    )  
+                                    (lambda-exp (2nd datum) (map parse-exp (cddr datum)))
                                 )
                                 (eopl:error 'parse-exp "lambda argument list: formals must be symbols: ~s" datum)
                             )
@@ -250,11 +240,8 @@
         (cases expression exp
             [var-exp (id) id]
             [lit-exp (val) val]
-            [lambda-body-is-list-exp (args body)
+            [lambda-exp (args body)
                 (list 'lambda args (unparse-exp body))
-            ]
-            [lambda-body-not-list-exp (args body)
-                (append (list 'lambda args) (map unparse-exp body))
             ]
             [lambda-variable-args-exp (args body)
                 (append (list 'lambda) (list args) (map unparse-exp body))

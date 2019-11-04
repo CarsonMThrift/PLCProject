@@ -37,7 +37,7 @@
     (cases expression exp
       [lit-exp (datum) datum]
       [var-exp (id)
-				(apply-env local-env id; look up its value.
+        (apply-env local-env id; look up its value.
       	  (lambda (x) x) ; procedure to call if id is in the environment 
           (lambda ()  
             (apply-env-ref global-env id
@@ -54,8 +54,16 @@
         (let ([proc-value (eval-exp rator local-env)]
               [args (if (equal? rator (var-exp 'quote)) ; special case for quote
                         (map unparse-exp rands)
-                        (eval-rands rands local-env))])
-          (apply-proc proc-value args))]
+                        ; (eval-rands rands local-env)
+                        (cases proc-val (eval-exp rator local-env) ; THE PROBLEM IS HERE :() MAGIKARP, I CHOOSE YOUUUUUU
+                          [closure (args body local-env) (eval-rands-ref args rands local-env)]
+                          [else (eval-rands rands local-env)]
+                        )
+                    )
+              ])
+              (apply-proc proc-value args)
+          )
+      ]
       [lambda-exp (args body) 
         (closure args body local-env)
       ]
@@ -104,10 +112,29 @@
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
 ; evaluate the list of operands, putting results into a list
-
 (define eval-rands
   (lambda (rands local-env)
-    (map (lambda (x) (eval-exp x local-env)) rands)))
+    (map (lambda (x) (eval-exp x local-env)) rands)
+  )
+)
+
+
+(define eval-rands-ref
+  (lambda (args-of-closure rands local-env)
+    (if (null? rands) 
+      '()
+      (if (symbol? (car args-of-closure))
+        (cons (eval-exp (car rands) local-env) (eval-rands (cdr args-of-closure) (cdr rands) local-env))
+        (cons (apply-env-ref local-env (car rands) 
+          (lambda (x) x)
+          (lambda () 
+                  (eopl:error 'apply-env
+                  "variable ~s is not bound"))) 
+          (eval-rands (cdr args-of-closure) (cdr rands) local-env))
+      ) 
+    )
+  )
+)
 
 (define eval-bodies
   (lambda (bodies local-env)
@@ -135,6 +162,7 @@
             (eval-bodies bodies (extend-env (list arg-names) (list args) local-env))
           ]
           [(list? arg-names) 
+            
             (eval-bodies bodies (extend-env arg-names args local-env))
           ]
           [else 

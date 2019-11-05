@@ -99,7 +99,7 @@
                 (lambda (x) x)
                 (lambda () 
                   (eopl:error 'apply-env
-                  "variable ~s is not bound"
+                  "in set!-exp, variable ~s is not bound"
                   id))
               )
             )
@@ -123,14 +123,21 @@
   (lambda (args-of-closure rands local-env)
     (if (null? rands) 
       '()
+      ; (display local-env)
       (if (symbol? (car args-of-closure))
-        (cons (eval-exp (car rands) local-env) (eval-rands (cdr args-of-closure) (cdr rands) local-env))
-        (cons (apply-env-ref local-env (car rands) 
-          (lambda (x) x)
-          (lambda () 
-                  (eopl:error 'apply-env
-                  "variable ~s is not bound"))) 
-          (eval-rands (cdr args-of-closure) (cdr rands) local-env))
+        (cons 
+          (eval-exp (car rands) local-env) 
+          (eval-rands-ref (cdr args-of-closure) (cdr rands) local-env)
+        )
+        (cons 
+          (apply-env-ref local-env (car args-of-closure)
+            (lambda (x) x)
+            (lambda () 
+                    (eopl:error 'eval-rands-ref
+                    "called apply-env-ref and ith a bith: ~s"
+                    (car args-of-closure)))) 
+          (eval-rands-ref (cdr args-of-closure) (cdr rands) local-env)
+        )
       ) 
     )
   )
@@ -161,8 +168,7 @@
           [(symbol? arg-names) 
             (eval-bodies bodies (extend-env (list arg-names) (list args) local-env))
           ]
-          [(list? arg-names) 
-            
+          [(list? arg-names)
             (eval-bodies bodies (extend-env arg-names args local-env))
           ]
           [else 

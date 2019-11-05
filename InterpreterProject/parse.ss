@@ -85,7 +85,7 @@
                             (eopl:error 'parse-exp "lambda-expression: missing body ~s" datum)
                         ]
                         [(list? (2nd datum)) ;checking for args
-                            (if ((list-of symbol?) (2nd datum))
+                            (if (or ((list-of symbol?) (2nd datum)) ((list-of (list-of symbol?)) (2nd datum)))
                                 (if (null? (cddr datum)) ;no body
                                     (eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)
                                     (lambda-exp (2nd datum) (map parse-exp (cddr datum)))

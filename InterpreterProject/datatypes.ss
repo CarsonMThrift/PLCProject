@@ -9,7 +9,7 @@
         (val scheme-value?)
     ]
     [lambda-exp
-        (args lambda-value?)
+        (args (list-of lambda-value?))
         (body (list-of expression?))
     ]
     [lambda-variable-args-exp
@@ -112,7 +112,7 @@
   (lambda (x) #t))
 
 (define lambda-value?
-    (lambda (x) (or ((list-of (list-of symbol?)) x) ((list-of symbol?) x)))
+    (lambda (x) (or ((list-of symbol?) x) (symbol? x)))
 )
 
 ; Box ADT

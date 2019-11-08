@@ -85,7 +85,7 @@
                             (eopl:error 'parse-exp "lambda-expression: missing body ~s" datum)
                         ]
                         [(list? (2nd datum)) ;checking for args
-                            (if (or ((list-of symbol?) (2nd datum)) ((list-of (list-of symbol?)) (2nd datum)))
+                            (if ((list-of lambda-value?) (2nd datum))
                                 (if (null? (cddr datum)) ;no body
                                     (eopl:error 'parse-exp "lambda-expression: incorrect length ~s" datum)
                                     (lambda-exp (2nd datum) (map parse-exp (cddr datum)))
@@ -278,7 +278,8 @@
             [begin-exp (bodies) exp]
             [while-exp (test-exp bodies) exp]
             [case-exp (condition bodies) exp]
-
+            [or-exp (bodies) exp]
+            [define-exp (name definition) exp]
         )
     )
 )

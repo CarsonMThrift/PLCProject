@@ -56,7 +56,7 @@
                         (map unparse-exp rands)
                         ; (eval-rands rands local-env)
                         (cases proc-val (eval-exp rator local-env) ; THE PROBLEM IS HERE :() MAGIKARP, I CHOOSE YOUUUUUU
-                          [closure (args body local-env) (eval-rands-ref args rands local-env)]
+                          [closure (arg-names bodies local-env-closure) (eval-rands-ref arg-names rands local-env)]
                           [else (eval-rands rands local-env)]
                         )
                     )
@@ -121,24 +121,34 @@
 
 (define eval-rands-ref
   (lambda (args-of-closure rands local-env)
-    (if (null? rands) 
-      '()
-      ; (display local-env)
-      (if (symbol? (car args-of-closure))
-        (cons 
-          (eval-exp (car rands) local-env) 
-          (eval-rands-ref (cdr args-of-closure) (cdr rands) local-env)
-        )
-        (cons 
-          (apply-env-ref local-env (car args-of-closure)
-            (lambda (x) x)
-            (lambda () 
-                    (eopl:error 'eval-rands-ref
-                    "called apply-env-ref and ith a bith: ~s"
-                    (car args-of-closure)))) 
-          (eval-rands-ref (cdr args-of-closure) (cdr rands) local-env)
-        )
-      ) 
+    (begin 
+      (display local-env)
+      (if (or (null? args-of-closure) (null? rands)) 
+        '()
+        ; (display local-env)
+        (if (symbol? (car args-of-closure))
+          (cons 
+            (eval-exp (car rands) local-env) 
+            (eval-rands-ref (cdr args-of-closure) (cdr rands) local-env)
+          )
+          (cons 
+            (apply-env-ref local-env 
+              (unparse-exp (car rands))
+              (lambda (x) x)
+              (lambda ()
+                      (apply-env-ref global-env (unparse-exp (car rands))
+                        (lambda (x) x)
+                        (lambda () 
+                          (eopl:error 'eval-rands-ref
+                          "called apply-env-ref and failed on: ~s"
+                          (unparse-exp (car rands))))
+                      ) 
+              )
+            ) 
+            (eval-rands-ref (cdr args-of-closure) (cdr rands) local-env)
+          )
+        ) 
+      )
     )
   )
 )
@@ -165,11 +175,12 @@
       [prim-proc (op) (apply-prim-proc op args)]
       [closure (arg-names bodies local-env) 
         (cond 
+          [(null? arg-names) (eval-bodies bodies local-env)]
           [(symbol? arg-names) 
             (eval-bodies bodies (extend-env (list arg-names) (list args) local-env))
           ]
           [(list? arg-names)
-            (eval-bodies bodies (extend-env arg-names args local-env))
+            (eval-bodies bodies (extend-env (derefparams arg-names) args local-env)) 
           ]
           [else 
             (eval-bodies 
@@ -191,6 +202,12 @@
       [else (error 'apply-proc
                    "Attempt to apply bad procedure: ~s" 
                     proc-value)])))
+(define derefparams
+  (lambda (arg-names)
+    (map (lambda (x) (if (symbol? x) x (cadr x))) arg-names)
+  )
+)
+
 
 (define flatten
   (lambda (iL)

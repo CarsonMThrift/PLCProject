@@ -17,11 +17,40 @@
 )
 
 (define apply-k
-  (lambda (k v)
-    (k v)))
+  (lambda (k val)
+    (cases continuation k
+      [test-k (then-exp else-exp env k)
+        (if val
+        (eval-exp then-exp env k)
+        (eval-exp else-exp env k))
+      ]
+      [rator-k (rands env k)
+        (eval-rands rands
+        env
+        (rands-k val k))
+      ]
+      [rands-k (proc-value k)
+        (apply-proc proc-value val k)
+      ]
+      [while-k (bodies k)
+        (if val 
+          (begin
+            (eval-bodies bodies local-env k)
+            (eval-exp exp local-env k)
+          )
+        )
+      ]
+      [eval-bodies-k (bodies k)
+          (if (and val (not (null? (cdr bodies))))
+              (eval-bodies (cdr bodies) local-env k)
+          )
+      ]
+    )
+  ) 
+)
 
-(define make-k
-  (lambda (v) v))
+; (define make-k
+;   (lambda (v) v))
 
 ; top-level-eval evaluates a form in the global environment
 (define top-level-eval
@@ -56,18 +85,10 @@
         (eval-exp
           rator
           local-env
-          (make-k
-            (lambda (proc-value)
-              (eval-rands
-                rands
-                local-env
-                (make-k
-                  (lambda (args)
-                    (apply-k k (apply-proc proc-value args))
-                  )
-                )
-              )
-            )
+          (rator-k
+            rands
+            local-env
+            k
           )
         )]
         ; (let ([proc-value (eval-exp rator local-env)]
@@ -82,24 +103,36 @@
         (closure args body local-env)
       ]
       [if-exp (pred then_case just_in_case)
-        (if (eval-exp pred local-env)
-          (eval-exp then_case local-env)
-          (eval-exp just_in_case local-env)
+        (eval-exp pred local-env 
+          (test-k then_case just_in_case local-env k)
         )
+        
+        ; (if (eval-exp pred local-env)
+        ;   (eval-exp then_case local-env)
+        ;   (eval-exp just_in_case local-env)
+        ; )
       ]
       [if-exp-no-just (pred then_case)
-        (if (eval-exp pred local-env)
-          (eval-exp then_case local-env)
-          (void)
+        (eval-exp pred local-env 
+          (test-k then_case (void) local-env k)
         )
+        
+        ; (if (eval-exp pred local-env)
+        ;   (eval-exp then_case local-env)
+        ;   (void)
+        ; )
       ]
       [while-exp (test-exp bodies)
-        (if (eval-exp test-exp local-env) 
-          (begin
-            (eval-bodies bodies local-env)
-            (eval-exp exp local-env)
-          )
+        (eval-exp test-exp local-env 
+          (while-k bodies k)
         )
+        
+        ; (if (eval-exp test-exp local-env) 
+        ;   (begin
+        ;     (eval-bodies bodies local-env)
+        ;     (eval-exp exp local-env)
+        ;   )
+        ; )
       ]
       [set!-exp (id exp)
         (set-ref! 
@@ -146,14 +179,21 @@
     (map-cps (lambda (x) (eval-exp x local-env)) rands k)))
 
 (define eval-bodies
-  (lambda (bodies local-env)
-    (if (null? (cdr bodies))
-      (eval-exp (car bodies) local-env)
-      (begin
-        (eval-exp (car bodies) local-env)
-        (eval-bodies (cdr bodies) local-env)
-      )
+  (lambda (bodies local-env k)
+
+    (eval-exp (car bodies) local-env 
+        (eval-bodies-k bodies k)
     )
+
+
+
+    ; (if (null? (cdr bodies))
+    ;   (eval-exp (car bodies) local-env)
+    ;   (begin
+    ;     (eval-exp (car bodies) local-env)
+    ;     (eval-bodies (cdr bodies) local-env)
+    ;   )
+    ; )
   )
 )
 
@@ -292,26 +332,6 @@
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-op)])))
-
-(define apply-k
-  (lambda (k val)
-    (cases continuation k
-      [test-k (then-exp else-exp env k)
-        (if val
-        (eval-exp then-exp env k)
-        (eval-exp else-exp env k))
-      ]
-      [rator-k (rands env k)
-        (eval-rands rands
-        env
-        (rands-k val k))
-      ]
-      [rands-k (proc-value k)
-        (apply-proc proc-value val k)
-      ]
-    )
-  ) 
-)
 
 (define rep      ; "read-eval-print" loop.
   (lambda ()

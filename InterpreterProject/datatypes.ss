@@ -102,6 +102,15 @@
         (proc-value scheme-value?)
         (k continuation?)
     ]
+    [while-k 
+        (test-exp expression?)
+        (bodies (list-of expression?))
+        (k continuation?)
+    ]
+    [eval-bodies-k 
+        (bodies (list-of expression?))
+        (k continuation?)
+    ]
 )
    
 ; datatype for procedures.  At first there is only one

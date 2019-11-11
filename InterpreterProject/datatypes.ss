@@ -84,14 +84,24 @@
         (syms (list-of variable-args?))
         (vals (list-of scheme-value?))
         (env environment?))
-    (recursively-extended-env-record
-        (proc-names (list-of symbol?))
-        (idss (list-of symbol?))
-        (bodiess (list-of (list-of expression?)))
-        (env environment?)
-    )
+)
 
-   
+(define-datatype continuation continuation?
+    [test-k
+        (then-exp expression?)
+        (else-exp expression?)
+        (env environment?)
+        (k continuation?)
+    ]
+    [rator-k
+        (rands (list-of expression?))
+        (env environment?)
+        (k continuation?)
+    ]
+    [rands-k
+        (proc-value scheme-value?)
+        (k continuation?)
+    ]
 )
    
 ; datatype for procedures.  At first there is only one
@@ -104,6 +114,7 @@
         (arg-names closure-args?)
         (bodies (list-of expression?))
         (local-env environment?)]
+    [k-proc (k continuation?)]
 )
 	
 ;; environment type definitions

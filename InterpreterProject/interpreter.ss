@@ -1,4 +1,3 @@
-
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not append cons car cdr caar cadr cdar cddr 
                               caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? eqv? equal? atom? length 
                                list->vector list-tail list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
@@ -17,6 +16,13 @@
   (lambda () (set! global-env init-env))
 )
 
+(define apply-k
+  (lambda (k v)
+    (k v)))
+
+(define make-k
+  (lambda (v) v))
+
 ; top-level-eval evaluates a form in the global environment
 (define top-level-eval
   (lambda (form)
@@ -33,9 +39,9 @@
 ; eval-exp is the main component of the interpreter
 
 (define eval-exp
-  (lambda (exp local-env)
+  (lambda (exp local-env k)
     (cases expression exp
-      [lit-exp (datum) datum]
+      [lit-exp (datum) (apply-k k datum)]
       [var-exp (id)
 				(apply-env local-env id; look up its value.
       	  (lambda (x) x) ; procedure to call if id is in the environment 
@@ -46,16 +52,29 @@
                 (eopl:error 'apply-env
                 "variable ~s is not bound"
                 id)))))] 
-          ;(eopl:error 'apply-env ; procedure to call if id not in env
-		      ;  "variable not found in environment: ~s"
-			    ;  id)
-          
       [app-exp (rator rands)
-        (let ([proc-value (eval-exp rator local-env)]
-              [args (if (equal? rator (var-exp 'quote)) ; special case for quote
-                        (map unparse-exp rands)
-                        (eval-rands rands local-env))])
-          (apply-proc proc-value args))]
+        (eval-exp
+          rator
+          local-env
+          (make-k
+            (lambda (proc-value)
+              (eval-rands
+                rands
+                local-env
+                (make-k
+                  (lambda (args)
+                    (apply-k k (apply-proc proc-value args))
+                  )
+                )
+              )
+            )
+          )
+        )]
+        ; (let ([proc-value (eval-exp rator local-env)]
+          ;     [args (if (equal? rator (var-exp 'quote)) ; special case for quote
+          ;               (map-cps unparse-exp rands k)
+          ;               (eval-rands rands local-env k))])
+          ; (apply-proc proc-value args))]
       [lambda-exp (args body) 
         (closure args body local-env)
       ]
@@ -103,11 +122,28 @@
       [define-exp (name defintion) (top-level-eval exp)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
+(define map-cps
+    (lambda (proc-cps L k)
+        (cond
+            [(null? L) (apply-k k '())]
+            [else
+                (1st-cps L
+                    (make-k 
+                        (lambda (1st-ls)
+                            (map-cps proc-cps (cdr L)
+                                (make-k
+                                    (lambda (cdr-ls)
+                                        (proc-cps 1st-ls
+                                            (make-k
+                                                (lambda (e-with-proc-done) (apply-k k (cons e-with-proc-done cdr-ls))
+)))))))))]))) ; TASTE THE RAINBOW
+
+
 ; evaluate the list of operands, putting results into a list
 
 (define eval-rands
-  (lambda (rands local-env)
-    (map (lambda (x) (eval-exp x local-env)) rands)))
+  (lambda (rands local-env k)
+    (map-cps (lambda (x) (eval-exp x local-env)) rands k)))
 
 (define eval-bodies
   (lambda (bodies local-env)
@@ -250,11 +286,32 @@
       [(memv) (memv (1st args) (2nd args))]
       [(and) (andmap (lambda (x) (and #t x)) args)]
       ; [(or) (ormap (lambda (x) (or x #f)) args)]
+      ; [(display) (display (1st args))]
+      ; [(newline) (newline)]
 
       [else (error 'apply-prim-proc 
             "Bad primitive procedure name: ~s" 
             prim-op)])))
 
+(define apply-k
+  (lambda (k val)
+    (cases continuation k
+      [test-k (then-exp else-exp env k)
+        (if val
+        (eval-exp then-exp env k)
+        (eval-exp else-exp env k))
+      ]
+      [rator-k (rands env k)
+        (eval-rands rands
+        env
+        (rands-k val k))
+      ]
+      [rands-k (proc-value k)
+        (apply-proc proc-value val k)
+      ]
+    )
+  ) 
+)
 
 (define rep      ; "read-eval-print" loop.
   (lambda ()

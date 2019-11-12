@@ -105,11 +105,17 @@
     ]
     [while-k 
         (bodies (list-of expression?))
+        (local-env environment?)
         (k continuation?)
     ]
     [eval-bodies-k 
         (bodies (list-of expression?))
+        (local-env environment?)
         (k continuation?)
+    ]
+    [set-k 
+        (var-reference cell?)
+        (k continuation?)    
     ]
 )
    

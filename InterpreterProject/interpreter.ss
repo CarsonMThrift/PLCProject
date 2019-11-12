@@ -33,7 +33,7 @@
       [rands-k (proc-value k)
         (apply-proc proc-value val k)
       ]
-      [while-k (bodies k)
+      [while-k (bodies local-env k)
         (if val 
           (begin
             (eval-bodies bodies local-env k)
@@ -41,10 +41,17 @@
           )
         )
       ]
-      [eval-bodies-k (bodies k)
-          (if (and val (not (null? (cdr bodies))))
-              (eval-bodies (cdr bodies) local-env k)
-          )
+      [eval-bodies-k (bodies local-env k)
+        (if  (not (null? (cdr bodies)))
+            (eval-bodies (cdr bodies) local-env k)
+            (apply-k k val)
+        )
+      ]
+      [set-k (var-reference k) 
+        (begin
+          (set-ref! var-reference val)
+          val
+        )
       ]
     )
   ) 
@@ -59,7 +66,7 @@
     ; later we may add things that are not expressions.
     (cases expression form
       [define-exp (name definition) 
-        (set! global-env (extend-env (list name) (list (eval-exp definition (empty-env) (id-k))) global-env ))
+          (set! global-env (extend-env (list name) (list (eval-exp definition (empty-env) (id-k))) global-env))   
       ]
       [else (eval-exp form (empty-env) (id-k))]
     )
@@ -98,11 +105,12 @@
           ;               (map-cps unparse-exp rands k)
           ;               (eval-rands rands local-env k))])
           ; (apply-proc proc-value args))]
+
       [lambda-exp (args body) 
-        (closure args body local-env)
+        (apply-k k (closure args body local-env))
       ]
       [lambda-variable-args-exp (args body)
-        (closure args body local-env)
+        (apply-k k (closure args body local-env))
       ]
       [if-exp (pred then_case just_in_case)
         (eval-exp pred local-env 
@@ -116,7 +124,7 @@
       ]
       [if-exp-no-just (pred then_case)
         (eval-exp pred local-env 
-          (test-k then_case (void) local-env k)
+          (test-k then_case (lit-exp (void)) local-env k)
         )
         
         ; (if (eval-exp pred local-env)
@@ -126,7 +134,7 @@
       ]
       [while-exp (test-exp bodies)
         (eval-exp test-exp local-env 
-          (while-k bodies k)
+          (while-k bodies local-env k)
         )
         
         ; (if (eval-exp test-exp local-env) 
@@ -137,22 +145,39 @@
         ; )
       ]
       [set!-exp (id exp)
-        (set-ref! 
-          (apply-env-ref local-env id 
-            (lambda (x) x) ; procedure to call if id is in the environment 
-            (lambda () 
-              (apply-env-ref global-env id
-                (lambda (x) x)
-                (lambda () 
-                  (eopl:error 'apply-env
-                  "variable ~s is not bound"
-                  id))
+        (eval-exp exp local-env 
+          (set-k 
+            (apply-env-ref local-env id 
+              (lambda (x) x) ; procedure to call if id is in the environment 
+              (lambda () 
+                (apply-env-ref global-env id
+                  (lambda (x) x)
+                  (lambda () 
+                    (eopl:error 'apply-env
+                    "variable ~s is not bound"
+                    id))
+                )
               )
             )
+            k 
           )
-          (eval-exp exp local-env)
         )
         
+        ; (set-ref! 
+        ;   (apply-env-ref local-env id 
+        ;     (lambda (x) x) ; procedure to call if id is in the environment 
+        ;     (lambda () 
+        ;       (apply-env-ref global-env id
+        ;         (lambda (x) x)
+        ;         (lambda () 
+        ;           (eopl:error 'apply-env
+        ;           "variable ~s is not bound"
+        ;           id))
+        ;       )
+        ;     )
+        ;   )
+        ;   (eval-exp exp local-env k)
+        ; ) 
       ]
       [define-exp (name defintion) (top-level-eval exp)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
@@ -180,12 +205,12 @@
 
 (define eval-rands
   (lambda (rands local-env k)
-    (map (lambda (x) (eval-exp x local-env)) rands k))) ;TO DO: make this in cps form
+    (apply-k k (map (lambda (x) (eval-exp x local-env (id-k))) rands)))) ;TO DO: make this in cps form
 
 (define eval-bodies
   (lambda (bodies local-env k)
     (eval-exp (car bodies) local-env 
-        (eval-bodies-k bodies k)
+        (eval-bodies-k bodies local-env k)
     )
     ; (if (null? (cdr bodies))
     ;   (eval-exp (car bodies) local-env)
@@ -321,7 +346,7 @@
         [(apply) (apply-proc (1st args) (2nd args))]
         [(map) 
           (let ([p (1st args)])
-            (map (lambda (x) (apply-proc p (list x))) (2nd args))
+            (map (lambda (x) (apply-proc p (list x) k)) (2nd args))
           )
         ]
         [(void) (void)]

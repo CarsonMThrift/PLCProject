@@ -87,6 +87,7 @@
 )
 
 (define-datatype continuation continuation?
+    [id-k]
     [test-k
         (then-exp expression?)
         (else-exp expression?)
@@ -103,7 +104,6 @@
         (k continuation?)
     ]
     [while-k 
-        (test-exp expression?)
         (bodies (list-of expression?))
         (k continuation?)
     ]

@@ -31,7 +31,7 @@
 		    (30 (29 27 24 20 15 9 2 3) 0)
 		    3
 		    (5 7)
-		    (((a b (c () (d new (f g)) h)) i))
+		    ; (((a b (c () (d new (f g)) h)) i))
 		    5
 		    )]
           [answers 
@@ -77,34 +77,35 @@
 		       (list r ls count))))
 	     (eval-one-exp '(apply apply (list + '(1 2))))
 	     (eval-one-exp '(apply map (list (lambda (x) (+ x 3)) '(2 4))))
-	     (eval-one-exp ' 
-	      (letrec ( [apply-continuation (lambda (k . list-of-values) (apply k list-of-values))] 
-			[subst-left-cps 
-			 (lambda (new old slist changed unchanged) 
-			   (let loop ([slist slist] [changed changed] [unchanged unchanged]) 
-			     (cond [(null? slist) (apply-continuation unchanged)] 
-				   [(symbol? (car slist)) 
-				    (if (eq? (car slist) old) 
-					(apply-continuation changed (cons new (cdr slist))) 
-					(loop (cdr slist) 
-					      (lambda (changed-cdr) 
-						(apply-continuation changed (cons (car slist) changed-cdr))) 
-					      unchanged))] 
-				   [else (loop (car slist) 
-					       (lambda (changed-car) 
-						 (apply-continuation changed (cons changed-car (cdr slist)))) 
-					       (lambda () 
-						 (loop (cdr slist) 
-						       (lambda (changed-cdr) 
-							 (apply-continuation changed (cons (car slist) changed-cdr))) 
-						       unchanged)))])))]) 
-		(let ([s '((a b (c () (d e (f g)) h)) i)]) 
-		  (subst-left-cps 'new 'e s (lambda (changed-s) 
-					      (subst-left-cps 'new 'q s 
-							      (lambda (wont-be-changed) 
-								'whocares) 
-							      (lambda () (list changed-s)))) 
-				  (lambda () "It's an error to get here")))))
+	    ;  (eval-one-exp ' 
+	    ;   (letrec ( [apply-continuation (lambda (k . list-of-values) (apply k list-of-values))] 
+		; 	[subst-left-cps 
+		; 	 (lambda (new old slist changed unchanged) 
+		; 	   (let loop ([slist slist] [changed changed] [unchanged unchanged]) 
+		; 	     (cond [(null? slist) (apply-continuation unchanged)] 
+		; 		   [(symbol? (car slist)) 
+		; 		    (if (eq? (car slist) old) 
+		; 			(apply-continuation changed (cons new (cdr slist))) 
+		; 			(loop (cdr slist) 
+		; 			      (lambda (changed-cdr) 
+		; 				(apply-continuation changed (cons (car slist) changed-cdr))) 
+		; 			      unchanged))] 
+		; 		   [else (loop (car slist) 
+		; 			       (lambda (changed-car) 
+		; 				 (apply-continuation changed (cons changed-car (cdr slist)))) 
+		; 			       (lambda () 
+		; 				 (loop (cdr slist) 
+		; 				       (lambda (changed-cdr) 
+		; 					 (apply-continuation changed (cons (car slist) changed-cdr))) 
+		; 				       unchanged)))])))]) 
+		; (let ([s '((a b (c () (d e (f g)) h)) i)]) 
+		;   (subst-left-cps 'new 'e s (lambda (changed-s) 
+		; 			      (subst-left-cps 'new 'q s 
+		; 					      (lambda (wont-be-changed) 
+		; 						'whocares) 
+		; 					      (lambda () (list changed-s)))) 
+		; 		  (lambda () "It's an error to get here")))
+				;   ))
 	     (eval-one-exp ' ((lambda () 3 4 5)))
 )])
       (display-results correct answers equal?)))
@@ -216,7 +217,7 @@
 					 (set! a (+ 3 a))
 					 a))))
 		  (f)))
-	     )])))
+	     )])
       (display-results correct answers equal?)))
 
 (define (test-exit-list)

@@ -57,6 +57,15 @@
         (set! global-env (extend-env (list name) (list val) global-env))
         (apply-k k val)
       ]
+      [map-1st-k (proc-cps ls k)
+        (map-cps proc-cps (cdr ls) (map-cdr-k proc-cps val k))
+      ]
+      [map-cdr-k (proc-cps 1st-ls k)
+        (apply-proc proc-cps (list 1st-ls) (map-apply-k val k))
+      ]
+      [map-apply-k (cdr-k k)
+        (apply-k k (cons val cdr-k))
+      ]
     )
   ) 
 )
@@ -194,7 +203,23 @@
       [define-exp (name defintion) (top-level-eval exp k)]
       [else (eopl:error 'eval-exp "Bad abstract syntax: ~a" exp)])))
 
-; (define 1st-cps (lambda (ls k) (apply-k k (car ls))))
+(define 1st-cps (lambda (ls k) (apply-k k (car ls))))
+
+(define map-cps
+  (lambda (proc-cps ls k)
+    (if (null? ls) 
+      (apply-k k '())
+      (1st-cps 
+        ls
+        (map-1st-k
+          proc-cps
+          ls
+          k
+        )
+      )
+    )
+  )
+)
 
 ; (define map-cps
 ;     (lambda (proc-cps L k)
@@ -288,10 +313,10 @@
       [(apply) (apply-proc (1st args) (2nd args) k)]
       [(map) 
         (let ([p (1st args)])
-          (map (lambda (x) (apply-proc p (list x) k)) (2nd args))
+          (map-cps p (2nd args) k)
         )
       ]
-      [(call/cc) (apply-proc (car args) (list (k-proc k)) k)]
+      [(call/cc) (apply-proc (car args) (list (k-proc k)) (id-k))]
       [else 
         (apply-k k
           (case prim-proc

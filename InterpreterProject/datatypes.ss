@@ -121,6 +121,20 @@
         (name symbol?)
         (k continuation?)
     ]
+    [map-1st-k 
+        (proc-cps scheme-value?)
+        (ls list?)
+        (k continuation?)
+    ]
+    [map-cdr-k
+        (proc-cps scheme-value?)
+        (1st-ls scheme-value?)
+        (k continuation?)
+    ]
+    [map-apply-k
+        (cdr-k (list-of scheme-value?))
+        (k continuation?)
+    ]
 )
    
 ; datatype for procedures.  At first there is only one

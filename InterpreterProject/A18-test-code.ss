@@ -104,8 +104,7 @@
 		; 					      (lambda (wont-be-changed) 
 		; 						'whocares) 
 		; 					      (lambda () (list changed-s)))) 
-		; 		  (lambda () "It's an error to get here")))
-				;   ))
+		; 		  (lambda () "It's an error to get here")))))
 	     (eval-one-exp ' ((lambda () 3 4 5)))
 )])
       (display-results correct answers equal?)))
@@ -125,7 +124,7 @@
 	     (eval-one-exp ' (+ 5 (call/cc (lambda (k) (+ 6 (k 7))))))
 	     (eval-one-exp ' (+ 3 (call/cc (lambda (k) (* 2 5)))))
 	     (eval-one-exp ' (+ 5 (call/cc (lambda (k) (or #f #f (+ 7 (k 4)) #f)))))
-	     (eval-one-exp '(list (call/cc procedure?)))
+	     (eval-one-exp '(list (call/cc procedure?)))	
 	     (eval-one-exp ' (+ 2 (call/cc (lambda (k) (+ 3 (let* ([x 5] [y (k 7)]) (+ 10 (k 5))))))) )
 	     (eval-one-exp ' ((car (call/cc list)) (list cdr 1 2 3)) )
 	     (eval-one-exp
@@ -146,6 +145,7 @@
 		     9
 		     25
 		     (3 2 5 2 5)
+		     7
 		     )]
           [answers 
             (list 
@@ -155,30 +155,39 @@
 		(define xxx #f)) 
 	       (eval-one-exp ' (+ 5 (call/cc (lambda (k) 
 					       (set! xxx k) 2)))) 
-	       (eval-one-exp ' (* 7 (xxx 4))))
+	       (eval-one-exp ' (* 7 (xxx 4))))   
 	     (begin (eval-one-exp '
 		     (define break-out-of-map #f)) 
 		    (eval-one-exp ' 
-		     (set! break-out-of-map (call/cc (lambda (k) 
-						       (lambda (x) (if (= x 7) (k 1000) (+ x 4))))))) 
-		    (eval-one-exp '(map break-out-of-map '(1 3 5 7 9 11))) 
+		     (set! break-out-of-map
+		       (call/cc (lambda (k) 
+				  (lambda (x)
+				    (if (= x 7) (k 1000) (+ x 4))))))) 
+		    (eval-one-exp '(map break-out-of-map
+					'(1 3 5 7 9 11))) 
 		    (eval-one-exp 'break-out-of-map))
 	     (begin (eval-one-exp ' (define jump-into-map #f)) 
-		    (eval-one-exp ' (define do-the-map 
-				      (lambda (x) 
-					(map (lambda (v) 
-					       (if (= v 7) 
-						   (call/cc (lambda (k) (set! jump-into-map k) 100)) 
-						   (+ 3 v))) 
-					     x)))) 
+		    (eval-one-exp '
+		     (define do-the-map 
+		       (lambda (x) 
+			 (map (lambda (v) 
+				(if (= v 7) 
+				    (call/cc
+				     (lambda (k)
+				       (set! jump-into-map k) 100)) 
+				    (+ 3 v))) 
+			      x)))) 
 		    (eval-one-exp ' (do-the-map '(3 4 5 6 7 8 9 10))))
 	     (begin (eval-one-exp ' 
 		     (define jump-into-map #f)) 
-		    (eval-one-exp ' (define do-the-map 
-				      (lambda (x) 
-					(map (lambda (v) (if (= v 7) 
-							     (call/cc (lambda (k) (set! jump-into-map k) 100)) 
-							     (+ 3 v))) x)))) 
+		    (eval-one-exp '
+		     (define do-the-map 
+		       (lambda (x) 
+			 (map (lambda (v)
+				(if (= v 7) 
+				    (call/cc (lambda (k)
+					       (set! jump-into-map k) 100)) 
+				    (+ 3 v))) x)))) 
 		    (eval-one-exp ' (list (do-the-map '(3 4 5 6 7 8 9 10)))) 
 		    (eval-one-exp ' (jump-into-map 987654321)))
              (eval-one-exp 
@@ -206,7 +215,7 @@
 				     (k add1)
 				     (+ 4 v)))))
 		    '( 2 1 4 1 4)))
-	       (eval-one-exp '
+	      (eval-one-exp '
 		(begin
 		  (define a 4)
 		  (define f (lambda ()
@@ -214,11 +223,12 @@
 					 (set! a (+ 1 a))
 					 (set! a (+ 2 a))
 					 (k a)
-					 (set! a (+ 3 a))
+					 (set! a (+ 5 a))
 					 a))))
 		  (f)))
-	     )])
+	      )])
       (display-results correct answers equal?)))
+
 
 (define (test-exit-list)
     (let ([correct '(
@@ -227,14 +237,18 @@
 		     (3)
 		     12
 		     (12)
-)]
+		     )]
           [answers 
             (list 
 	     (eval-one-exp ' (+ 4 (exit-list 5 (exit-list 6 7))) )
 	     (eval-one-exp ' (+ 3 (- 2 (exit-list 5))))
 	     (eval-one-exp ' (- 7 (if (exit-list 3) 4 5)))
-	     (eval-one-exp '(call/cc (lambda (k) (+ 100 (exit-list (+ 3 (k 12)))))))
-	     (eval-one-exp '(call/cc (lambda (k) (+ 100 (k (+ 3 (exit-list 12)))))))
+	     (eval-one-exp
+	      '(call/cc (lambda (k)
+			  (+ 100 (exit-list (+ 3 (k 12)))))))
+	     (eval-one-exp
+	      '(call/cc (lambda (k)
+			  (+ 100 (k (+ 3 (exit-list 12)))))))
 )])
       (display-results correct answers equal?)))
 

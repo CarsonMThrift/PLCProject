@@ -1,7 +1,7 @@
 (define *prim-proc-names* '(+ - * / add1 sub1 zero? not append cons car cdr caar cadr cdar cddr 
                               caaar caadr cadar cdaar cddar cdadr caddr cdddr list null? assq eq? eqv? equal? atom? length 
                                list->vector list-tail list? pair? procedure? vector->list vector make-vector vector-ref vector? number? 
-                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map void and memv quotient call/cc))
+                                symbol? set-car! set-cdr! vector-set! display newline = < > <= >= quote apply map void and memv quotient call/cc exit-list))
 
 (define init-env         ; for now, our initial global environment only contains 
   (extend-env            ; procedure names.  Recall that an environment associates
@@ -37,7 +37,7 @@
         (if val 
           (begin
             (eval-bodies bodies local-env k)
-            (eval-exp exp local-env k)
+            (while-exp val bodies)
           )
         )
       ]
@@ -61,7 +61,7 @@
         (map-cps proc-cps (cdr ls) (map-cdr-k proc-cps val k))
       ]
       [map-cdr-k (proc-cps 1st-ls k)
-        (apply-proc proc-cps (list 1st-ls) (map-apply-k val k))
+        (proc-cps 1st-ls (map-apply-k val k))
       ]
       [map-apply-k (cdr-k k)
         (apply-k k (cons val cdr-k))
@@ -242,7 +242,7 @@
 
 (define eval-rands
   (lambda (rands local-env k)
-    (apply-k k (map (lambda (x) (eval-exp x local-env (id-k))) rands)))) ;TO DO: make this in cps form
+    (map-cps (lambda (x kk) (eval-exp x local-env kk)) rands k))) ;TO DO: make this in cps form
 
 (define eval-bodies
   (lambda (bodies local-env k)
@@ -313,10 +313,11 @@
       [(apply) (apply-proc (1st args) (2nd args) k)]
       [(map) 
         (let ([p (1st args)])
-          (map-cps p (2nd args) k)
+          (map-cps (lambda (x kk) (apply-proc p (list x) kk)) (2nd args) k)
         )
       ]
-      [(call/cc) (apply-proc (car args) (list (k-proc k)) (id-k))]
+      [(call/cc) (apply-proc (car args) (list (k-proc k)) k)]
+      [(exit-list) args]
       [else 
         (apply-k k
           (case prim-proc
